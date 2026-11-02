@@ -2,6 +2,7 @@
 
 This document contains exact code snippets extracted from the provided coursework notebooks, categorized by concept. These non-overlapping snippets represent the specific implementations and syntax used across single linear regression, multiple linear regression, and regularized regression models.
 
+Notebooks used in making this context file: `M2_Ridge_Lasso_Reg.ipynb`, `LinearRegression.ipynb`
 ## 1. Data Loading and Preparation
 
 **Loading the Iris Dataset using Seaborn**

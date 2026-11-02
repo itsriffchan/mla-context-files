@@ -2,6 +2,9 @@
 
 This document contains exact code snippets extracted from the provided notebooks, categorized by concept. These non-overlapping snippets represent the specific implementations and syntax used across the coursework.
 
+Notebooks used in making this context file: `GB-Regression-code2 2.ipynb`, `GB-Class-Code1.ipynb`, `GB-Class-code2 1.ipynb`
+
+
 ## 1. Data Loading and Inspection
 
 **Loading Built-in Datasets & Accessing the `Bunch` Object**

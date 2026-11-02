@@ -2,6 +2,7 @@
 
 This document contains exact code snippets extracted from the provided notebooks, categorized by concept. These non-overlapping snippets represent the specific implementations and syntax used across the coursework.
 
+Notebooks used in making this context file: `CategoricalNB-code2.ipynb`, `GaussianNB-code1.ipynb`, `GaussianNB-Code2.ipynb`
 ## 1. Data Loading and Inspection
 
 **Loading Data from CSV and Checking Shape**

@@ -2,6 +2,7 @@
 
 This document contains exact code snippets extracted from the provided notebooks, categorized by concept. These non-overlapping snippets represent the specific implementations and syntax used across the coursework.
 
+Notebooks used in making this context file: `KNN1.ipynb`, `KNN2.ipynb`
 ## 1. Dataset Loading and Inspection
 
 **Loading Built-in Breast Cancer Dataset & Accessing Keys**
