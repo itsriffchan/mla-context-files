@@ -236,6 +236,30 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #6b7280;
         }
+
+        .mistake-terminal {
+            width: min(56rem, calc(100vw - 2rem));
+            max-height: min(75vh, 40rem);
+            margin: auto;
+            padding: 0;
+            background: #1e1e1e;
+            color: #e2e8f0;
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+            overflow: hidden;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+        }
+
+        .mistake-terminal[open] {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mistake-terminal::backdrop {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(2px);
+        }
     </style>
 </head>
 
@@ -251,11 +275,53 @@
             </div>
             <h1 class="text-gray-300 font-semibold text-sm tracking-wide">Machine Learning Algorithms - reviewer</h1>
         </div>
-        <div
-            class="text-sm font-medium bg-blue-900/50 text-blue-300 px-4 py-1.5 rounded-full border border-blue-700/50 shadow-inner">
-            Score: <span id="score-counter" class="font-bold text-white">0</span> / <span id="total-blanks">0</span>
+        <div class="flex flex-wrap items-center gap-3 text-sm font-medium" aria-live="polite">
+            <div class="bg-blue-900/50 text-blue-300 px-4 py-1.5 rounded-full border border-blue-700/50 shadow-inner">
+                Score: <span id="score-counter" class="font-bold text-white">0</span> / <span id="total-blanks">0</span>
+                <span id="save-status" class="ml-2 text-xs text-gray-400" role="status"></span>
+            </div>
+            <button id="reset-btn" type="button" title="Clear all answers, scores, and mistakes."
+                class="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-white transition-colors">Reset all</button>
         </div>
     </header>
+
+    <dialog id="mistake-review" class="mistake-terminal" aria-labelledby="mistake-review-title">
+        <div class="header-bg flex shrink-0 items-center justify-between gap-4 px-4 py-3 border-b border-gray-700">
+            <h2 id="mistake-review-title" class="text-sm font-semibold"><span class="text-green-400" aria-hidden="true">&gt;_</span> Mistake log</h2>
+            <button id="close-mistakes-btn" type="button" autofocus aria-label="Close mistake review"
+                class="px-2 text-gray-400 hover:text-white rounded focus-visible:outline focus-visible:outline-blue-400">&times;</button>
+        </div>
+        <div class="p-4 min-h-0 overflow-auto custom-scrollbar">
+            <p id="mistake-empty" class="text-sm text-gray-400">No mistakes yet. Wrong or empty answers will appear here when you check.</p>
+            <table id="mistake-table" class="hidden w-full table-fixed text-sm text-left">
+                <caption class="text-left text-xs text-gray-400 pb-3">In quiz and code order. Adjacent blanks are grouped, with entries and answers in the same order. Attempts stay here until you reset.</caption>
+                <thead class="text-gray-400">
+                    <tr>
+                        <th scope="col" class="w-1/2 p-2">Code line</th>
+                        <th scope="col" class="w-1/4 p-2">You entered</th>
+                        <th scope="col" class="w-1/4 p-2">Expected answer</th>
+                    </tr>
+                </thead>
+                <tbody id="mistake-list"></tbody>
+            </table>
+        </div>
+    </dialog>
+
+    <dialog id="reset-confirmation" class="mistake-terminal" style="width: min(28rem, calc(100vw - 2rem))"
+        aria-labelledby="reset-title" aria-describedby="reset-message">
+        <div class="header-bg px-5 py-3 border-b border-gray-700">
+            <h2 id="reset-title" class="text-sm font-semibold text-red-300"></h2>
+        </div>
+        <div class="p-5">
+            <p id="reset-message" class="text-sm text-gray-300"></p>
+            <div class="mt-5 flex justify-end gap-3">
+                <button id="cancel-reset-btn" type="button" autofocus
+                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">Cancel</button>
+                <button id="confirm-reset-btn" type="button"
+                    class="px-4 py-2 bg-red-700 hover:bg-red-600 rounded text-sm text-white"></button>
+            </div>
+        </div>
+    </dialog>
 
     <!-- Main Workspace -->
     <div class="flex flex-1 min-w-0 min-h-0 overflow-hidden">
@@ -274,19 +340,31 @@
         <!-- Allow long code lines to scroll inside the editor without widening the workspace. -->
         <main class="flex-1 min-w-0 min-h-0 ide-bg flex flex-col relative">
 
+            <div id="end-of-file-notice" role="status" aria-live="polite" aria-atomic="true"
+                class="hidden absolute top-16 right-6 z-20 max-w-sm pointer-events-none rounded border border-blue-700 bg-[#252526] px-4 py-3 shadow-xl">
+                <p class="text-sm font-semibold text-blue-300">End of file reached</p>
+                <p class="mt-1 text-xs text-gray-300">Press Enter again to return to the first editable blank.</p>
+            </div>
+
             <!-- File Tab -->
-            <div class="flex bg-[#2d2d2d] border-b border-gray-700 text-sm">
-                <div class="px-5 py-2.5 bg-ide-bg border-t-2 border-blue-500 text-gray-200 flex items-center shadow-sm">
-                    <svg class="w-4 h-4 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <div class="flex shrink-0 min-w-0 items-center bg-[#2d2d2d] border-b border-gray-700 text-sm">
+                <div class="flex-1 min-w-0 px-5 py-2.5 bg-ide-bg border-t-2 border-blue-500 text-gray-200 flex items-center shadow-sm">
+                    <svg class="w-4 h-4 shrink-0 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 24 24">
                         <path
                             d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                     </svg>
-                    <span id="current-file-name">module_1.py</span>
+                    <span id="current-file-name" class="truncate">module_1.py</span>
+                </div>
+                <div class="flex shrink-0 items-center gap-2 px-3">
+                    <button id="review-mistakes-btn" type="button" aria-haspopup="dialog" aria-controls="mistake-review"
+                        class="px-3 py-1 rounded text-red-300 hover:bg-gray-700 transition-colors">Review mistakes</button>
+                    <button id="reset-file-btn" type="button" title="Clear answers, score, and mistakes for this file only."
+                        class="px-3 py-1 rounded text-gray-300 hover:bg-gray-700 transition-colors">Reset file</button>
                 </div>
             </div>
 
             <!-- Code Container -->
-            <div class="flex-1 min-w-0 min-h-0 overflow-auto custom-scrollbar relative pb-24">
+            <div id="code-viewport" class="flex-1 min-w-0 min-h-0 overflow-auto custom-scrollbar relative pb-24">
                 <h2 id="section-title" class="px-6 pt-6 text-xl font-bold text-gray-100"></h2>
 
                 <!-- The code block with line numbers -->
@@ -299,7 +377,7 @@
             </div>
 
             <!-- Action Bar (Floating at bottom) -->
-            <div
+            <div id="action-bar"
                 class="absolute bottom-0 left-0 right-0 header-bg border-t border-gray-700 p-4 flex justify-between items-center bg-opacity-95 backdrop-blur">
                 <div id="feedback-message" class="text-sm font-medium h-6 flex items-center transition-colors">
                     <!-- Feedback injected here -->
@@ -310,9 +388,9 @@
                     <button id="next-btn"
                         class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors text-white hidden">Next
                         File</button>
-                    <button id="check-btn"
+                    <button id="check-btn" aria-keyshortcuts="Control+Enter" title="Check answers (Ctrl+Enter)"
                         class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm font-bold transition-colors text-white shadow-lg">Check
-                        Run (F5)</button>
+                        Run (Ctrl+Enter)</button>
                 </div>
             </div>
         </main>
@@ -718,14 +796,21 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
         // Flatten helpers — build a flat list for global indexing
         // =====================================================================
         const flatQuizzes = [];          // { moduleIdx, quizIdx, quiz, moduleName, folder }
-        const moduleScores = [];         // [{ correct, total }]  per module
-        const quizScores = [];           // [{ correct, total }]  per flat quiz
+        const moduleScores = [];         // [{ correct, total }] per module
+        const quizScores = [];           // [{ correct, total }] per flat quiz
+        const quizProgress = [];         // Saved answers and results for each blank
+        const mistakeHistory = [];       // Submitted wrong answers, kept until reset
+
+        function emptyProgress(quiz) {
+            return quiz.answers.map(() => ({ value: '', correct: false, incorrect: false }));
+        }
 
         modules.forEach((mod, mi) => {
             let modTotal = 0;
             mod.quizzes.forEach((q, qi) => {
                 flatQuizzes.push({ moduleIdx: mi, quizIdx: qi, quiz: q, moduleName: mod.name, folder: mod.folder });
                 quizScores.push({ correct: 0, total: q.answers.length });
+                quizProgress.push(emptyProgress(q));
                 modTotal += q.answers.length;
             });
             moduleScores.push({ correct: 0, total: modTotal });
@@ -737,22 +822,220 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
         // State
         // =====================================================================
         let currentFlatIndex = 0;   // index into flatQuizzes
-        let globalScore = 0;
+        let endOfFileInput = null;
+        let pendingReset = null;
+        const storageKey = `ml-reviewer-progress:v1:${window.location.pathname.replace(/index\.html$/, '')}`;
 
         // =====================================================================
         // Element refs
         // =====================================================================
         const menuContainer = document.getElementById('sidebar-menu');
         const codeDisplay = document.getElementById('code-display');
+        const codeViewport = document.getElementById('code-viewport');
+        const actionBar = document.getElementById('action-bar');
+        const endOfFileNotice = document.getElementById('end-of-file-notice');
         const lineNumbersEl = document.getElementById('line-numbers');
         const sectionTitle = document.getElementById('section-title');
         const fileNameDisplay = document.getElementById('current-file-name');
         const scoreDisplay = document.getElementById('score-counter');
         const totalDisplay = document.getElementById('total-blanks');
+        const mistakeReview = document.getElementById('mistake-review');
+        const mistakeEmpty = document.getElementById('mistake-empty');
+        const mistakeTable = document.getElementById('mistake-table');
+        const mistakeList = document.getElementById('mistake-list');
+        const reviewMistakesBtn = document.getElementById('review-mistakes-btn');
+        const closeMistakesBtn = document.getElementById('close-mistakes-btn');
+        const resetFileBtn = document.getElementById('reset-file-btn');
+        const resetBtn = document.getElementById('reset-btn');
         const checkBtn = document.getElementById('check-btn');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
         const feedbackMsg = document.getElementById('feedback-message');
+        const saveStatus = document.getElementById('save-status');
+        const resetConfirmation = document.getElementById('reset-confirmation');
+        const resetTitle = document.getElementById('reset-title');
+        const resetMessage = document.getElementById('reset-message');
+        const cancelResetBtn = document.getElementById('cancel-reset-btn');
+        const confirmResetBtn = document.getElementById('confirm-reset-btn');
+
+        function quizId(entry) {
+            return `${entry.folder}/${entry.quiz.filename}`;
+        }
+
+        function quizRevision(quiz) {
+            return JSON.stringify([quiz.code, quiz.answers]);
+        }
+
+        function saveProgress() {
+            try {
+                window.localStorage.setItem(storageKey, JSON.stringify({
+                    version: 1,
+                    currentQuiz: quizId(flatQuizzes[currentFlatIndex]),
+                    quizzes: flatQuizzes.map((entry, fi) => ({
+                        id: quizId(entry), revision: quizRevision(entry.quiz), blanks: quizProgress[fi]
+                    })),
+                    mistakes: mistakeHistory.map(({ flatIndex, ...mistake }) => ({
+                        ...mistake, quizId: quizId(flatQuizzes[flatIndex])
+                    }))
+                }));
+                saveStatus.textContent = 'Saved locally';
+                saveStatus.title = 'Progress is saved in this browser on this device.';
+            } catch {
+                saveStatus.textContent = 'Not saved';
+                saveStatus.title = 'Browser storage is unavailable or full. Progress lasts only until this page closes.';
+            }
+        }
+
+        function restoreProgress() {
+            try {
+                const saved = JSON.parse(window.localStorage.getItem(storageKey));
+                if (!saved || saved.version !== 1 || !Array.isArray(saved.quizzes)) return;
+                const byId = new Map(saved.quizzes.filter(item => item && typeof item.id === 'string')
+                    .map(item => [item.id, item]));
+                const restored = new Map();
+                flatQuizzes.forEach((entry, fi) => {
+                    const previous = byId.get(quizId(entry));
+                    if (!previous || previous.revision !== quizRevision(entry.quiz) ||
+                        !Array.isArray(previous.blanks) || previous.blanks.length !== entry.quiz.answers.length) return;
+                    quizProgress[fi] = previous.blanks.map((blank, index) => {
+                        if (!blank || typeof blank.value !== 'string') return emptyProgress(entry.quiz)[index];
+                        const correct = blank.correct === true && blank.value.trim() === entry.quiz.answers[index];
+                        return { value: blank.value, correct, incorrect: !correct && blank.incorrect === true };
+                    });
+                    restored.set(quizId(entry), fi);
+                });
+                if (Array.isArray(saved.mistakes)) saved.mistakes.forEach(mistake => {
+                    if (!mistake || !restored.has(mistake.quizId) || typeof mistake.entered !== 'string') return;
+                    const flatIndex = restored.get(mistake.quizId);
+                    const quiz = flatQuizzes[flatIndex].quiz;
+                    const group = getBlankGroups(quiz).find(item => item.position === mistake.position);
+                    if (!group) return;
+                    mistakeHistory.push({
+                        flatIndex, position: group.position, codeLine: group.codeLine,
+                        entered: mistake.entered, expected: group.indices.map(index => quiz.answers[index]).join(', ')
+                    });
+                });
+                const lastQuiz = flatQuizzes.findIndex(entry => quizId(entry) === saved.currentQuiz);
+                if (lastQuiz >= 0) currentFlatIndex = lastQuiz;
+            } catch {
+                // Unavailable storage or an unreadable save must not prevent practice.
+            }
+        }
+
+        function requestReset(action, title, message, label) {
+            clearEndOfFileNotice();
+            pendingReset = action;
+            resetTitle.textContent = title;
+            resetMessage.textContent = message;
+            confirmResetBtn.textContent = label;
+            resetConfirmation.showModal();
+        }
+
+        function clearEndOfFileNotice() {
+            endOfFileInput = null;
+            endOfFileNotice.classList.add('hidden');
+        }
+
+        // Derive totals from saved results so a blank can only contribute one point.
+        function updateScores() {
+            moduleScores.forEach(score => {
+                score.correct = 0;
+            });
+            flatQuizzes.forEach((entry, fi) => {
+                const score = quizScores[fi];
+                score.correct = quizProgress[fi].filter(blank => blank.correct).length;
+                moduleScores[entry.moduleIdx].correct += score.correct;
+            });
+            scoreDisplay.textContent = quizScores.reduce((sum, score) => sum + score.correct, 0);
+        }
+
+        function renderMistakes() {
+            mistakeList.innerHTML = '';
+            mistakeEmpty.classList.toggle('hidden', mistakeHistory.length > 0);
+            mistakeTable.classList.toggle('hidden', mistakeHistory.length === 0);
+            [...mistakeHistory].sort((a, b) => a.flatIndex - b.flatIndex || a.position - b.position).forEach(mistake => {
+                const row = document.createElement('tr');
+                row.className = 'border-t border-gray-700';
+                const contextCell = document.createElement('th');
+                contextCell.scope = 'row';
+                contextCell.className = 'p-2 align-top font-normal text-gray-300';
+                const codeLine = document.createElement('code');
+                codeLine.style.whiteSpace = 'pre-wrap';
+                codeLine.style.overflowWrap = 'anywhere';
+                codeLine.textContent = mistake.codeLine;
+                contextCell.appendChild(codeLine);
+                row.appendChild(contextCell);
+                [mistake.entered, mistake.expected].forEach((answer, index) => {
+                    const cell = document.createElement('td');
+                    cell.className = `p-2 align-top ${index === 0 ? 'text-red-300' : 'text-green-300'}`;
+                    const code = document.createElement('code');
+                    code.style.whiteSpace = 'pre-wrap';
+                    code.style.overflowWrap = 'anywhere';
+                    // Submitted answers are text, including anything that resembles HTML.
+                    code.textContent = answer;
+                    cell.appendChild(code);
+                    row.appendChild(cell);
+                });
+                mistakeList.appendChild(row);
+            });
+        }
+
+        function restoreInput(input, blank) {
+            input.value = blank.value;
+            input.disabled = blank.correct;
+            input.classList.toggle('correct', blank.correct);
+            input.classList.toggle('incorrect', blank.incorrect);
+            input.placeholder = blank.incorrect ? input.dataset.answer : '';
+        }
+
+        function focusBlank(input) {
+            const gap = 12;
+            const barBounds = actionBar.getBoundingClientRect();
+            // Leave enough space to scroll the last blank above the floating action bar.
+            codeViewport.style.paddingBottom = `${barBounds.height + gap * 2}px`;
+            input.focus({ preventScroll: true });
+            input.select();
+
+            const viewport = codeViewport.getBoundingClientRect();
+            const bounds = input.getBoundingClientRect();
+            const visibleTop = Math.max(0, viewport.top + codeViewport.clientTop) + gap;
+            const visibleBottom = Math.min(window.innerHeight, barBounds.top,
+                viewport.top + codeViewport.clientTop + codeViewport.clientHeight) - gap;
+            if (bounds.top < visibleTop || bounds.height > visibleBottom - visibleTop) {
+                codeViewport.scrollTop += bounds.top - visibleTop;
+            } else if (bounds.bottom > visibleBottom) {
+                codeViewport.scrollTop += bounds.bottom - visibleBottom;
+            }
+
+            // Long lines scroll horizontally inside their own code pane.
+            const content = input.closest('.code-content');
+            const contentBounds = content.getBoundingClientRect();
+            const left = contentBounds.left + content.clientLeft + gap;
+            const right = contentBounds.left + content.clientLeft + content.clientWidth - gap;
+            if (bounds.left < left || bounds.width > right - left) {
+                content.scrollLeft += bounds.left - left;
+            } else if (bounds.right > right) {
+                content.scrollLeft += bounds.right - right;
+            }
+        }
+
+        function getBlankGroups(quiz) {
+            const groups = [];
+            let lineStart = 0;
+            quiz.code.split('\n').forEach(line => {
+                // Group adjacent blanks, including dotted names and comma-separated lists.
+                const pattern = /__B\d+__(?:[ \t]*(?:[.,][ \t]*)?__B\d+__)*/g;
+                for (const match of line.matchAll(pattern)) {
+                    groups.push({
+                        indices: Array.from(match[0].matchAll(/__B(\d+)__/g), token => Number(token[1])),
+                        position: lineStart + match.index,
+                        codeLine: line.replace(/__B\d+__/g, '___')
+                    });
+                }
+                lineStart += line.length + 1;
+            });
+            return groups;
+        }
 
         // =====================================================================
         // Sidebar — collapsible folder tree
@@ -866,12 +1149,14 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
         // Load quiz by flat index
         // =====================================================================
         function loadQuiz(flatIndex) {
+            clearEndOfFileNotice();
             currentFlatIndex = flatIndex;
             const entry = flatQuizzes[flatIndex];
             const quiz = entry.quiz;
 
             sectionTitle.textContent = quiz.title;
             fileNameDisplay.textContent = `${entry.folder} / ${quiz.filename}`;
+            fileNameDisplay.title = fileNameDisplay.textContent;
             feedbackMsg.innerHTML = '';
 
             // Ensure this module's folder is open
@@ -892,6 +1177,7 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
                     data-index="${i}"
                     class="code-blank"
                     style="width: ${widthPx}px"
+                    title="Enter/Down: next blank; Up: previous blank; Ctrl+Enter: check answers"
                     autocomplete="off"
                     spellcheck="false">`;
                 const regex = new RegExp(`__B${i}__`, 'g');
@@ -907,56 +1193,106 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
 
             // Input listeners
             document.querySelectorAll('.code-blank').forEach(input => {
+                const blank = quizProgress[flatIndex][Number(input.dataset.index)];
+                restoreInput(input, blank);
                 input.addEventListener('input', () => {
+                    clearEndOfFileNotice();
+                    blank.value = input.value;
+                    blank.incorrect = false;
                     input.classList.remove('incorrect');
                     input.placeholder = '';
+                    saveProgress();
+                });
+                input.addEventListener('blur', clearEndOfFileNotice);
+                input.addEventListener('keydown', event => {
+                    if ((event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Enter') ||
+                        event.ctrlKey || event.altKey || event.metaKey || event.shiftKey ||
+                        event.isComposing || mistakeReview.open || resetConfirmation.open) return;
+                    event.preventDefault();
+                    if (event.key === 'Enter' && event.repeat) return;
+                    const blanks = Array.from(document.querySelectorAll('.code-blank'))
+                        .filter(blank => !blank.disabled);
+                    const direction = event.key === 'ArrowUp' ? -1 : 1;
+                    const nextBlank = blanks[blanks.indexOf(input) + direction];
+                    if (nextBlank) {
+                        clearEndOfFileNotice();
+                        focusBlank(nextBlank);
+                    } else if (event.key === 'Enter' && blanks.length > 0) {
+                        if (endOfFileInput === input) {
+                            clearEndOfFileNotice();
+                            focusBlank(blanks[0]);
+                        } else {
+                            endOfFileInput = input;
+                            endOfFileNotice.classList.remove('hidden');
+                        }
+                    } else {
+                        clearEndOfFileNotice();
+                    }
                 });
             });
 
             // Navigation
             prevBtn.classList.toggle('hidden', currentFlatIndex === 0);
             nextBtn.classList.toggle('hidden', currentFlatIndex === flatQuizzes.length - 1);
+            saveProgress();
         }
 
         // =====================================================================
         // Check answers
         // =====================================================================
         checkBtn.addEventListener('click', () => {
-            const inputs = document.querySelectorAll('.code-blank');
+            clearEndOfFileNotice();
+            const inputs = Array.from(document.querySelectorAll('.code-blank'));
+            // Capture every part before clearing wrong entries or locking correct ones.
+            const submitted = new Map(inputs.map(input => [Number(input.dataset.index), input.value]));
+            const wrongIndices = new Set();
             let allCorrect = true;
-            let newlyCorrect = 0;
+            const previousMistakes = mistakeHistory.length;
 
             inputs.forEach(input => {
-                if (input.classList.contains('correct')) return;
+                const blank = quizProgress[currentFlatIndex][Number(input.dataset.index)];
+                if (blank.correct) return;
 
                 const userVal = input.value.trim();
                 const correctAns = input.dataset.answer;
 
                 if (userVal === correctAns) {
-                    input.classList.add('correct');
-                    input.classList.remove('incorrect');
-                    input.disabled = true;
-                    newlyCorrect++;
+                    blank.value = userVal;
+                    blank.correct = true;
+                    blank.incorrect = false;
                 } else {
                     allCorrect = false;
+                    wrongIndices.add(Number(input.dataset.index));
+                    blank.value = '';
+                    blank.incorrect = true;
                     input.classList.remove('animate-shake');
                     void input.offsetWidth;
-                    input.classList.add('animate-shake', 'incorrect');
-                    if (userVal !== '') input.value = '';
-                    input.placeholder = correctAns;
+                    input.classList.add('animate-shake');
                 }
+                restoreInput(input, blank);
             });
 
-            // Update scores
-            globalScore += newlyCorrect;
-            scoreDisplay.textContent = globalScore;
+            const quiz = flatQuizzes[currentFlatIndex].quiz;
+            getBlankGroups(quiz).forEach(group => {
+                if (!group.indices.some(index => wrongIndices.has(index))) return;
+                mistakeHistory.push({
+                    flatIndex: currentFlatIndex,
+                    position: group.position,
+                    codeLine: group.codeLine,
+                    entered: group.indices.map(index => {
+                        const value = submitted.get(index);
+                        return value.trim() === '' ? '(empty)' : value;
+                    }).join(', '),
+                    expected: group.indices.map(index => quiz.answers[index]).join(', ')
+                });
+            });
 
-            quizScores[currentFlatIndex].correct += newlyCorrect;
-
-            const entry = flatQuizzes[currentFlatIndex];
-            moduleScores[entry.moduleIdx].correct += newlyCorrect;
-
+            updateScores();
             buildSidebar();
+            saveProgress();
+            if (mistakeHistory.length > previousMistakes) {
+                renderMistakes();
+            }
 
             // Feedback
             if (allCorrect) {
@@ -964,6 +1300,67 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
             } else {
                 feedbackMsg.innerHTML = `<span class="text-red-400 flex items-center"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Compilation Error: Please check the highlighted variables.</span>`;
             }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' || !event.ctrlKey || event.altKey || event.metaKey ||
+                event.shiftKey || event.isComposing || mistakeReview.open || resetConfirmation.open) return;
+            event.preventDefault();
+            if (!event.repeat) checkBtn.click();
+        });
+
+        reviewMistakesBtn.addEventListener('click', () => {
+            clearEndOfFileNotice();
+            if (!mistakeReview.open) mistakeReview.showModal();
+        });
+        closeMistakesBtn.addEventListener('click', () => mistakeReview.close());
+        mistakeReview.addEventListener('click', event => {
+            if (event.target !== mistakeReview) return;
+            const bounds = mistakeReview.getBoundingClientRect();
+            if (event.clientX < bounds.left || event.clientX > bounds.right ||
+                event.clientY < bounds.top || event.clientY > bounds.bottom) {
+                mistakeReview.close();
+            }
+        });
+
+        function resetFileProgress(flatIndex) {
+            quizProgress[flatIndex] = emptyProgress(flatQuizzes[flatIndex].quiz);
+            for (let i = mistakeHistory.length - 1; i >= 0; i--) {
+                if (mistakeHistory[i].flatIndex === flatIndex) mistakeHistory.splice(i, 1);
+            }
+            updateScores();
+            renderMistakes();
+            loadQuiz(flatIndex);
+        }
+
+        function resetAllProgress() {
+            flatQuizzes.forEach((entry, fi) => {
+                quizProgress[fi] = emptyProgress(entry.quiz);
+            });
+            currentFlatIndex = 0;
+            mistakeHistory.length = 0;
+            renderMistakes();
+            if (mistakeReview.open) mistakeReview.close();
+            updateScores();
+            loadQuiz(0);
+        }
+
+        resetFileBtn.addEventListener('click', () => {
+            const flatIndex = currentFlatIndex;
+            requestReset(() => resetFileProgress(flatIndex), 'Reset this file?',
+                `Clear all answers, earned points, and mistake history for ${flatQuizzes[flatIndex].quiz.filename}? Other files will keep their progress. This also replaces the saved progress for this file and cannot be undone.`, 'Reset file');
+        });
+        resetBtn.addEventListener('click', () => {
+            requestReset(resetAllProgress, 'Reset all progress?',
+                'Clear all answers, scores, and mistake history across every file? This also replaces your saved progress and cannot be undone.', 'Reset all');
+        });
+        cancelResetBtn.addEventListener('click', () => resetConfirmation.close());
+        resetConfirmation.addEventListener('close', () => { pendingReset = null; });
+        confirmResetBtn.addEventListener('click', () => {
+            const action = pendingReset;
+            pendingReset = null;
+            resetConfirmation.close();
+            if (action) action();
         });
 
         // =====================================================================
@@ -980,8 +1377,11 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
         // Init
         // =====================================================================
         totalDisplay.textContent = totalBlanks;
+        restoreProgress();
+        updateScores();
+        renderMistakes();
         buildSidebar();
-        loadQuiz(0);
+        loadQuiz(currentFlatIndex);
     </script>
 </body>
 
