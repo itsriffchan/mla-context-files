@@ -11,10 +11,18 @@ OMG yes so fun this is so FUN i LOVE machine learning this is SOO FUN AND NOT TE
 
 The [YouHateYourself](YouHateYourself/) folder are practice exercises meant to be checked with their respective Python (`.py`) checker. Match each exercise to the checker for the same module.
 
+Easiest way to do this is by cloning the repository. 
+```sh
+git clone https://github.com/itsriffchan/mla-context-files.git
+```
+Otherwise, just download the necessary files.
+
+---
+
 For Module 5:
 
 1. Fill in [m5-practice.ipynb](YouHateYourself/m5-practice.ipynb) and save your changes.
-2. With Python 3 installed, run this command from the folder containing this README:
+2. With Python 3 installed, run this command from the folder containing this README (assuming the cloned repo):
 
    ```sh
    cd YouHateYourself
