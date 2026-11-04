@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Interactive Quiz IDE</title>
+
+    <!-- Tailwind CSS for Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- PrismJS for Syntax Highlighting (Dark Theme) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script>window.Prism = window.Prism || {}; Prism.manual = true;</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        /* Custom IDE Theme Overrides */
+        body {
+            background-color: #0f172a;
+            /* Tailwind slate-900 */
+            color: #e2e8f0;
+        }
+
+        .ide-bg {
+            background-color: #1e1e1e;
+        }
+
+        .sidebar-bg {
+            background-color: #252526;
+        }
+
+        .header-bg {
+            background-color: #333333;
+        }
+
+        pre[class*="language-"] {
+            background: transparent !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Line Numbers Gutter */
+        .code-editor {
+            display: flex;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .line-numbers-gutter {
+            padding: 1.5rem 0;
+            text-align: right;
+            user-select: none;
+            color: #858585;
+            min-width: 50px;
+            padding-right: 16px;
+            padding-left: 16px;
+            border-right: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .line-numbers-gutter .line-num {
+            display: block;
+            height: 1.7em;
+        }
+
+        .code-content {
+            flex: 1;
+            overflow-x: auto;
+            min-width: 0;
+        }
+
+        .code-content pre[class*="language-"] {
+            padding: 1.5rem !important;
+        }
+
+        /* Sidebar per-quiz score badge */
+        .quiz-score-badge {
+            font-size: 0.65rem;
+            padding: 1px 6px;
+            border-radius: 9999px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar folder tree */
+        .folder-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #d4d4d4;
+            transition: background-color 0.15s;
+        }
+
+        .folder-header:hover {
+            background-color: #2a2d2e;
+        }
+
+        .folder-chevron {
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+            margin-right: 4px;
+            color: #858585;
+        }
+
+        .folder-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .folder-children {
+            overflow: hidden;
+            transition: max-height 0.25s ease;
+        }
+
+        .folder-children.collapsed {
+            max-height: 0 !important;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 12px 4px 32px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.15s;
+            gap: 8px;
+        }
+
+        .file-item:hover {
+            background-color: #2a2d2e;
+        }
+
+        .file-item.active {
+            background-color: #37373d;
+            color: #ffffff;
+        }
+
+        /* Input Blank Styling */
+        .code-blank {
+            background-color: rgba(255, 255, 255, 0.08);
+            border: none;
+            border-bottom: 2px solid #6b7280;
+            color: #f8fafc;
+            padding: 0px 6px;
+            margin: 0 4px;
+            outline: none;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.95rem;
+            border-radius: 2px 2px 0 0;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .code-blank:focus {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-bottom-color: #3b82f6;
+            /* blue-500 */
+        }
+
+        .code-blank.correct {
+            border-bottom-color: #22c55e !important;
+            color: #4ade80 !important;
+            background-color: rgba(34, 197, 94, 0.15) !important;
+            pointer-events: none;
+            /* Lock input when correct */
+        }
+
+        .code-blank.incorrect {
+            border-bottom-color: #ef4444 !important;
+            color: #f87171 !important;
+            background-color: rgba(239, 68, 68, 0.15) !important;
+        }
+
+        /* Placeholder styling for revealed answers */
+        .code-blank.incorrect::placeholder {
+            color: #fca5a5;
+            /* lighter red */
+            opacity: 0.8;
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20% {
+                transform: translateX(-4px);
+            }
+
+            40% {
+                transform: translateX(4px);
+            }
+
+            60% {
+                transform: translateX(-4px);
+            }
+
+            80% {
+                transform: translateX(4px);
+            }
+        }
+
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Sidebar scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #252526;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col font-sans overflow-hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="header-bg border-b border-gray-700 p-3 flex justify-between items-center shadow-md z-10">
+        <div class="flex items-center space-x-3 px-2">
+            <div class="flex space-x-2">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <h1 class="text-gray-300 font-semibold text-sm tracking-wide ml-4">VS Code - ML Interactive Quiz</h1>
+        </div>
+        <div
+            class="text-sm font-medium bg-blue-900/50 text-blue-300 px-4 py-1.5 rounded-full border border-blue-700/50 shadow-inner">
+            Score: <span id="score-counter" class="font-bold text-white">0</span> / <span id="total-blanks">0</span>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Explorer Sidebar -->
+        <aside class="w-72 sidebar-bg border-r border-gray-700 flex flex-col">
+            <div class="p-3 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-700/50">
+                Explorer
+            </div>
+            <div class="overflow-y-auto custom-scrollbar flex-1 py-2" id="sidebar-menu">
+                <!-- Navigation items injected via JS -->
+            </div>
+        </aside>
+
+        <!-- Editor Area -->
+        <main class="flex-1 ide-bg flex flex-col relative">
+
+            <!-- File Tab -->
+            <div class="flex bg-[#2d2d2d] border-b border-gray-700 text-sm">
+                <div class="px-5 py-2.5 bg-ide-bg border-t-2 border-blue-500 text-gray-200 flex items-center shadow-sm">
+                    <svg class="w-4 h-4 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
+                    <span id="current-file-name">module_1.py</span>
+                </div>
+            </div>
+
+            <!-- Code Container -->
+            <div class="flex-1 overflow-auto custom-scrollbar relative pb-24">
+                <h2 id="section-title" class="px-6 pt-6 text-xl font-bold text-gray-100"></h2>
+
+                <!-- The code block with line numbers -->
+                <div class="code-editor">
+                    <div id="line-numbers" class="line-numbers-gutter"></div>
+                    <div class="code-content">
+                        <pre><code id="code-display" class="language-python"></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Bar (Floating at bottom) -->
+            <div
+                class="absolute bottom-0 left-0 right-0 header-bg border-t border-gray-700 p-4 flex justify-between items-center bg-opacity-95 backdrop-blur">
+                <div id="feedback-message" class="text-sm font-medium h-6 flex items-center transition-colors">
+                    <!-- Feedback injected here -->
+                </div>
+                <div class="flex space-x-3">
+                    <button id="prev-btn"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors text-white hidden">Previous</button>
+                    <button id="next-btn"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors text-white hidden">Next
+                        File</button>
+                    <button id="check-btn"
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm font-bold transition-colors text-white shadow-lg">Check
+                        Run (F5)</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // =====================================================================
+        // DATA: Modules → Quizzes
+        // To add a new module, just push another object into this array.
+        // =====================================================================
+        const modules = [
+            {
+                name: "M5 — Model Evaluation",
+                folder: "m5_model_evaluation",
+                expanded: true,
+                quizzes: [
+                    {
+                        title: "1. Manual Search Optimization",
+                        filename: "manual_search.py",
+                        code: `from sklearn import __B0__
+from sklearn.__B1__ import train_test_split
+from sklearn.__B2__ import RandomForestClassifier
+from sklearn.__B3__ import accuracy_score
+
+# Load dataset
+data = __B4__.__B5__()
+X = data.__B6__
+y = data.__B7__
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, __B8__=0.3, random_state=42)
+
+# Define a range of hyperparameters to search over
+__B9__ = [50, 100, 200]
+max_depth_options = [None, 10, 20, 30]
+__B10__ = [2, 5, 10]
+
+# Manually search through the hyperparameters
+best_score = 0
+best_params = {}
+
+for __B11__ in __B12__:
+    for max_depth in max_depth_options:
+        for __B13__ in __B14__:
+            # Initialize the model with the current hyperparameters
+            model = RandomForestClassifier(
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                min_samples_split=min_samples_split,
+                random_state=42
+            )
+            # Train the model
+            model.fit(X_train, y_train)
+            # Make predictions
+            predictions = model.predict(X_test)
+            # Evaluate the model
+            score = accuracy_score(__B15__, predictions)
+            # Update the best parameters if the current score is higher
+            if score > best_score:
+                best_score = score
+                best_params = {
+                    'n_estimators': n_estimators,
+                    'max_depth': max_depth,
+                    'min_samples_split': min_samples_split
+                }
+
+print(f'Best Score: {best_score:.2f}')
+print('Best Parameters:', best_params)`,
+                        answers: ["datasets", "model_selection", "ensemble", "metrics", "datasets", "load_iris", "data", "target", "test_size", "n_estimators_options", "min_samples_split_options", "n_estimators", "n_estimators_options", "min_samples_split", "min_samples_split_options", "y_test"]
+                    },
+                    {
+                        title: "2. Grid Search Optimization",
+                        filename: "grid_search.py",
+                        code: `from sklearn import datasets
+from sklearn.model_selection import train_test_split, __B0__
+from sklearn.ensemble import __B1__
+from sklearn.metrics import __B2__
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Initialize the model
+model = __B3__(random_state=42)
+
+# Define the parameter grid
+param_grid = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [None, 10, 20, 30],
+    'min_samples_split': [2, 5, 10]
+}
+
+# Initialize GridSearch
+grid_search = __B4__(__B5__=model, __B6__=param_grid, 
+                           cv=5, n_jobs=__B7__, __B8__='accuracy')
+
+# Fit the model
+grid_search.fit(X_train, y_train)
+
+# Print the best parameters and the corresponding score
+print(f'Best Parameters: {grid_search.best_params_}')
+print(f'Best Score: {grid_search.best_score_:.2f}')
+
+# Evaluate the best model on the test set
+best_model = grid_search.__B9__
+test_predictions = best_model.predict(__B10__)
+test_accuracy = accuracy_score(y_test, test_predictions)
+print(f'Test Accuracy: {test_accuracy * 100:.2f}%')`,
+                        answers: ["GridSearchCV", "RandomForestClassifier", "accuracy_score", "RandomForestClassifier", "GridSearchCV", "estimator", "param_grid", "-1", "scoring", "best_estimator_", "X_test"]
+                    },
+                    {
+                        title: "3. Randomized Search Optimization",
+                        filename: "randomized_search.py",
+                        code: `from sklearn import datasets
+from sklearn.model_selection import train_test_split, __B0__
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from __B1__.__B2__ import randint
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Initialize the model
+model = RandomForestClassifier(random_state=42)
+
+# Define the parameter distribution
+param_dist = {
+    'n_estimators': randint(50, 200),
+    'max_depth': [None, 10, 20, 30],
+    'min_samples_split': randint(2, 11)
+}
+
+# Initialize Randomized Search
+random_search = __B3__(estimator=model, __B4__=param_dist,n_iter=100, __B5__=5, n_jobs=-1, random_state=42, scoring='__B6__')
+
+# Fit the model
+__B7__.fit(X_train, y_train)
+
+# Print the best parameters and the corresponding score
+print(f'Best Parameters: {random_search.best_params_}')
+print(f'Best Score: {random_search.best_score_:.2f}')`,
+                        answers: ["RandomizedSearchCV", "scipy", "stats", "RandomizedSearchCV", "param_distributions", "cv", "accuracy", "random_search"]
+                    },
+                    {
+                        title: "4. Bayesian Optimization",
+                        filename: "bayesian_opt.py",
+                        code: `from bayes_opt import __B0__
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Define the function to optimize
+def rf_cv(n_estimators, max_depth, min_samples_split):
+    model = RandomForestClassifier(
+        n_estimators=int(n_estimators),
+        max_depth=int(max_depth),
+        min_samples_split=int(min_samples_split),
+        random_state=42
+    )
+    model.fit(X_train, y_train)
+    predictions = model.predict(X_test)
+    accuracy = accuracy_score(y_test, predictions)
+    return accuracy
+
+# Set the range for hyperparameters
+param_bounds = {
+    'n_estimators': (50, 200),
+    'max_depth': (10, 30),
+    'min_samples_split': (2, 10)
+}
+
+# Initialize Bayesian Optimization
+optimizer = __B1__(
+    __B2__=rf_cv,
+    __B3__=param_bounds,
+    random_state=42
+)
+
+# Perform optimization
+optimizer.__B4__(
+    __B5__=5,
+    n_iter=25
+)
+
+# Print the best parameters and the corresponding score
+print(f"Best Parameters: {optimizer.max['params']}")
+print(f"Best Score: {optimizer.max['__B6__']:.2f}")`,
+                        answers: ["BayesianOptimization", "BayesianOptimization", "f", "pbounds", "maximize", "init_points", "target"]
+                    },
+                    {
+                        title: "5. K-Fold Cross-Validation",
+                        filename: "kfold_cv.py",
+                        code: `from sklearn import datasets
+from sklearn.model_selection import __B0__, __B1__
+from sklearn.ensemble import RandomForestClassifier
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# Define the model
+model = RandomForestClassifier(random_state=42)
+
+# Define the K-Fold cross-validator
+kf = KFold(__B2__=5, __B3__=True, random_state=42)  # 5-Fold cross-validation
+
+# Perform cross-validation
+scores = cross_val_score(model, X, y, __B4__=kf, scoring='accuracy')
+
+# Output the scores for each fold and the mean score
+print(f'Cross-validation scores: {scores}')
+print(f'Mean cross-validation score: {__B5__.__B6__() :.2f}')`,
+                        answers: ["KFold", "cross_val_score", "n_splits", "shuffle", "cv", "scores", "mean"]
+                    },
+                    {
+                        title: "6. Stratified Cross-Validation",
+                        filename: "stratified_cv.py",
+                        code: `from sklearn import datasets
+from sklearn.model_selection import __B0__, __B1__
+from sklearn.ensemble import RandomForestClassifier
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# Define the model
+model = RandomForestClassifier(random_state=42)
+
+# Define the Stratified K-Fold cross-validator
+skf = __B2__(n_splits=5, shuffle=__B3__, random_state=42)  # 5-Fold stratified cross-validation
+
+# Perform cross-validation
+scores = __B4__(model, X, y, cv=skf, scoring='accuracy')
+
+# Output the scores for each fold and the mean score
+print(f'Stratified Cross-validation scores: {scores}')
+print(f'Mean stratified cross-validation score: {__B5__.__B6__() :.2f}')`,
+                        answers: ["StratifiedKFold", "cross_val_score", "StratifiedKFold", "True", "cross_val_score", "scores", "mean"]
+                    },
+                    {
+                        title: "7. Leave-One-Out (LOOCV)",
+                        filename: "loocv.py",
+                        code: `from sklearn import datasets
+from sklearn.model_selection import __B0__, __B1__
+from sklearn.ensemble import RandomForestClassifier
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# Define the model
+model = RandomForestClassifier(random_state=42)
+
+# Define the Leave-One-Out cross-validator
+loo = __B2__()
+
+# Perform cross-validation
+scores = __B3__(model, X, y, __B4__=loo, __B5__='accuracy')
+
+# Output the mean score
+print(f'LOOCV mean accuracy score: {scores.__B6__() :.2f}')`,
+                        answers: ["LeaveOneOut", "cross_val_score", "LeaveOneOut", "cross_val_score", "cv", "scoring", "mean"]
+                    },
+                    {
+                        title: "8. Shuffle-Split CV",
+                        filename: "shuffle_split.py",
+                        code: `from sklearn.model_selection import __B0__, cross_val_score
+from sklearn.linear_model import LogisticRegression 
+logreg = LogisticRegression(random_state=42)
+
+shuffle_split = __B1__(test_size=.5, train_size=.5, __B2__=10, random_state=42)
+scores = cross_val_score(logreg, iris.data, iris.target, cv=shuffle_split)
+print("Cross-validation scores: \\n{}".format(scores))`,
+                        answers: ["ShuffleSplit", "ShuffleSplit", "n_splits"]
+                    },
+                    {
+                        title: "9. Precision, Recall, and F1",
+                        filename: "classification_metrics.py",
+                        code: `from sklearn.metrics import __B0__, __B1__, __B2__
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
+
+# Load dataset
+data = load_iris()
+X = data.data
+y = data.target
+
+# Split the data into training and test sets
+__B3__, __B4__, __B5__, __B6__ = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Initialize and train the classifier
+model = __B7__(random_state=42)
+model.__B8__(X_train, y_train)
+
+# Make predictions
+predictions = model.predict(X_test)
+
+precision = __B9__(y_test, predictions, average='macro')
+recall = __B10__(y_test, predictions, average='macro')
+f1 = __B11__(y_test, predictions, average='macro')
+
+print(f'Precision: {precision:.2f}')
+print(f'Recall: {recall:.2f}')
+print(f'F1 Score: {f1:.2f}')`,
+                        answers: ["precision_score", "recall_score", "f1_score", "X_train", "X_test", "y_train", "y_test", "RandomForestClassifier", "fit", "precision_score", "recall_score", "f1_score"]
+                    },
+                    {
+                        title: "10. Confusion Matrix",
+                        filename: "confusion_matrix.py",
+                        code: `from sklearn.ensemble import RandomForestClassifier
+classifier = RandomForestClassifier(n_estimators=10, __B0__="entropy")
+classifier.fit(X_train, y_train)
+
+y_pred = __B1__.predict(X_test)
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(__B2__, y_pred)
+print(cm)
+
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+disp = ConfusionMatrixDisplay(__B3__=cm)
+__B4__.plot(cmap=plt.cm.Blues)
+plt.show()`,
+                        answers: ["criterion", "classifier", "y_test", "confusion_matrix", "disp"]
+                    },
+                    {
+                        title: "11. Regression Metrics (MAE/MSE)",
+                        filename: "regression_metrics.py",
+                        code: `from sklearn.metrics import __B0__
+
+true_values = [2.5, 3.7, 1.8, 4.0, 5.2]
+predicted_values = [2.1, 3.9, 1.7, 3.8, 5.0]
+
+mae = __B1__(true_values, __B2__)
+print('Mean Absolute Error: ', round(mae, 2))
+
+# --- Mean Squared Error ---
+from sklearn.metrics import __B3__
+
+mse = __B4__(__B5__, predicted_values)
+print('Mean Squared Error: ', round(mse, 2))`,
+                        answers: ["mean_absolute_error", "mean_absolute_error", "predicted_values", "mean_squared_error", "mean_squared_error", "true_values"]
+                    },
+                    {
+                        title: "12. Regression Metrics (RMSE/R2)",
+                        filename: "regression_metrics_2.py",
+                        code: `from sklearn.metrics import mean_squared_error
+import numpy as np
+
+# Sample data
+true_prices = np.array([250000, 300000, 200000, 400000, 350000])
+predicted_prices = np.array([240000, 310000, 210000, 380000, 340000])
+
+# Calculate RMSE
+rmse = np.__B0__(mean_squared_error(true_prices, predicted_prices))
+print('Root Mean Squared Error: ', round(rmse, 2))
+
+# --- R-Squared ---
+from sklearn.metrics import __B1__
+
+true_values = [2.5, 3.7, 1.8, 4.0, 5.2]
+predicted_values = [2.1, 3.9, 1.7, 3.8, 5.0]
+
+r2 = __B2__(true_values, __B3__)
+print('R-squared (R²) Score: ', round(r2, 2))`,
+                        answers: ["sqrt", "r2_score", "r2_score", "predicted_values"]
+                    }
+                ]
+            }
+            // ─── ADD MORE MODULES HERE ───
+            // ,{
+            //     name: "M6 — Feature Engineering",
+            //     folder: "m6_feature_engineering",
+            //     expanded: false,
+            //     quizzes: [ ... ]
+            // }
+        ];
+
+        // =====================================================================
+        // Flatten helpers — build a flat list for global indexing
+        // =====================================================================
+        const flatQuizzes = [];          // { moduleIdx, quizIdx, quiz, moduleName, folder }
+        const moduleScores = [];         // [{ correct, total }]  per module
+        const quizScores = [];           // [{ correct, total }]  per flat quiz
+
+        modules.forEach((mod, mi) => {
+            let modTotal = 0;
+            mod.quizzes.forEach((q, qi) => {
+                flatQuizzes.push({ moduleIdx: mi, quizIdx: qi, quiz: q, moduleName: mod.name, folder: mod.folder });
+                quizScores.push({ correct: 0, total: q.answers.length });
+                modTotal += q.answers.length;
+            });
+            moduleScores.push({ correct: 0, total: modTotal });
+        });
+
+        const totalBlanks = quizScores.reduce((a, b) => a + b.total, 0);
+
+        // =====================================================================
+        // State
+        // =====================================================================
+        let currentFlatIndex = 0;   // index into flatQuizzes
+        let globalScore = 0;
+
+        // =====================================================================
+        // Element refs
+        // =====================================================================
+        const menuContainer = document.getElementById('sidebar-menu');
+        const codeDisplay = document.getElementById('code-display');
+        const lineNumbersEl = document.getElementById('line-numbers');
+        const sectionTitle = document.getElementById('section-title');
+        const fileNameDisplay = document.getElementById('current-file-name');
+        const scoreDisplay = document.getElementById('score-counter');
+        const totalDisplay = document.getElementById('total-blanks');
+        const checkBtn = document.getElementById('check-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedbackMsg = document.getElementById('feedback-message');
+
+        // =====================================================================
+        // Sidebar — collapsible folder tree
+        // =====================================================================
+        function buildSidebar() {
+            menuContainer.innerHTML = '';
+            let flatIdx = 0;  // tracks position in flatQuizzes
+
+            modules.forEach((mod, mi) => {
+                const ms = moduleScores[mi];
+                const modComplete = ms.correct === ms.total;
+
+                // ── Folder header row ──
+                const folderRow = document.createElement('div');
+                folderRow.className = 'folder-header';
+
+                const left = document.createElement('div');
+                left.className = 'flex items-center gap-1 truncate';
+
+                // Chevron
+                const chevron = document.createElement('svg');
+                chevron.setAttribute('width', '16');
+                chevron.setAttribute('height', '16');
+                chevron.setAttribute('viewBox', '0 0 16 16');
+                chevron.setAttribute('fill', 'currentColor');
+                chevron.className = `folder-chevron ${mod.expanded ? '' : 'collapsed'}`;
+                chevron.innerHTML = '<path d="M6 4l4 4-4 4z"/>';
+
+                // Folder icon
+                const folderIcon = document.createElement('span');
+                folderIcon.className = 'mr-1';
+                folderIcon.textContent = mod.expanded ? '📂' : '📁';
+
+                const folderName = document.createElement('span');
+                folderName.className = 'truncate';
+                folderName.textContent = mod.folder;
+
+                left.appendChild(chevron);
+                left.appendChild(folderIcon);
+                left.appendChild(folderName);
+
+                // Module score badge
+                const badge = document.createElement('span');
+                let bc = 'quiz-score-badge ';
+                if (modComplete) bc += 'bg-green-900/60 text-green-400 border border-green-700/50';
+                else if (ms.correct > 0) bc += 'bg-yellow-900/40 text-yellow-400 border border-yellow-700/50';
+                else bc += 'bg-gray-700/50 text-gray-500 border border-gray-600/30';
+                badge.className = bc;
+                badge.textContent = `${ms.correct}/${ms.total}`;
+
+                folderRow.appendChild(left);
+                folderRow.appendChild(badge);
+                menuContainer.appendChild(folderRow);
+
+                // ── Children container ──
+                const children = document.createElement('div');
+                children.className = `folder-children ${mod.expanded ? '' : 'collapsed'}`;
+                // set max-height for animation
+                children.style.maxHeight = mod.expanded ? `${mod.quizzes.length * 40}px` : '0';
+
+                mod.quizzes.forEach((quiz, qi) => {
+                    const fi = flatIdx++;
+                    const qs = quizScores[fi];
+                    const isActive = fi === currentFlatIndex;
+                    const qComplete = qs.correct === qs.total;
+
+                    const fileRow = document.createElement('div');
+                    fileRow.className = `file-item ${isActive ? 'active' : 'text-gray-400'}`;
+
+                    // File icon + name
+                    const fileLeft = document.createElement('div');
+                    fileLeft.className = 'flex items-center gap-1.5 truncate';
+
+                    const pyIcon = document.createElement('span');
+                    pyIcon.className = 'text-yellow-400 text-xs flex-shrink-0';
+                    pyIcon.textContent = '🐍';
+
+                    const fname = document.createElement('span');
+                    fname.className = 'truncate';
+                    fname.textContent = quiz.filename;
+
+                    fileLeft.appendChild(pyIcon);
+                    fileLeft.appendChild(fname);
+
+                    // Per-quiz badge
+                    const qBadge = document.createElement('span');
+                    let qbc = 'quiz-score-badge ';
+                    if (qComplete) qbc += 'bg-green-900/60 text-green-400 border border-green-700/50';
+                    else if (qs.correct > 0) qbc += 'bg-yellow-900/40 text-yellow-400 border border-yellow-700/50';
+                    else qbc += 'bg-gray-700/50 text-gray-500 border border-gray-600/30';
+                    qBadge.className = qbc;
+                    qBadge.textContent = `${qs.correct}/${qs.total}`;
+
+                    fileRow.appendChild(fileLeft);
+                    fileRow.appendChild(qBadge);
+                    fileRow.onclick = () => loadQuiz(fi);
+                    children.appendChild(fileRow);
+                });
+
+                menuContainer.appendChild(children);
+
+                // Toggle expand/collapse on folder click
+                folderRow.onclick = () => {
+                    mod.expanded = !mod.expanded;
+                    buildSidebar();
+                };
+            });
+        }
+
+        // =====================================================================
+        // Load quiz by flat index
+        // =====================================================================
+        function loadQuiz(flatIndex) {
+            currentFlatIndex = flatIndex;
+            const entry = flatQuizzes[flatIndex];
+            const quiz = entry.quiz;
+
+            sectionTitle.textContent = quiz.title;
+            fileNameDisplay.textContent = `${entry.folder} / ${quiz.filename}`;
+            feedbackMsg.innerHTML = '';
+
+            // Ensure this module's folder is open
+            modules[entry.moduleIdx].expanded = true;
+            buildSidebar();
+
+            // Highlight with Prism
+            codeDisplay.textContent = quiz.code;
+            Prism.highlightElement(codeDisplay);
+
+            // Replace tokens with inputs
+            let htmlContent = codeDisplay.innerHTML;
+            quiz.answers.forEach((answer, i) => {
+                const widthPx = Math.max(60, (answer.length * 8) + 16);
+                const inputHtml = `<input type="text"
+                    id="input-${i}"
+                    data-answer="${answer}"
+                    data-index="${i}"
+                    class="code-blank"
+                    style="width: ${widthPx}px"
+                    autocomplete="off"
+                    spellcheck="false">`;
+                const regex = new RegExp(`__B${i}__`, 'g');
+                htmlContent = htmlContent.replace(regex, inputHtml);
+            });
+            codeDisplay.innerHTML = htmlContent;
+
+            // Line numbers
+            const lineCount = quiz.code.split('\n').length;
+            lineNumbersEl.innerHTML = Array.from({ length: lineCount }, (_, i) =>
+                `<span class="line-num">${i + 1}</span>`
+            ).join('');
+
+            // Input listeners
+            document.querySelectorAll('.code-blank').forEach(input => {
+                input.addEventListener('input', () => {
+                    input.classList.remove('incorrect');
+                    input.placeholder = '';
+                });
+            });
+
+            // Navigation
+            prevBtn.classList.toggle('hidden', currentFlatIndex === 0);
+            nextBtn.classList.toggle('hidden', currentFlatIndex === flatQuizzes.length - 1);
+        }
+
+        // =====================================================================
+        // Check answers
+        // =====================================================================
+        checkBtn.addEventListener('click', () => {
+            const inputs = document.querySelectorAll('.code-blank');
+            let allCorrect = true;
+            let newlyCorrect = 0;
+
+            inputs.forEach(input => {
+                if (input.classList.contains('correct')) return;
+
+                const userVal = input.value.trim();
+                const correctAns = input.dataset.answer;
+
+                if (userVal === correctAns) {
+                    input.classList.add('correct');
+                    input.classList.remove('incorrect');
+                    input.disabled = true;
+                    newlyCorrect++;
+                } else {
+                    allCorrect = false;
+                    input.classList.remove('animate-shake');
+                    void input.offsetWidth;
+                    input.classList.add('animate-shake', 'incorrect');
+                    if (userVal !== '') input.value = '';
+                    input.placeholder = correctAns;
+                }
+            });
+
+            // Update scores
+            globalScore += newlyCorrect;
+            scoreDisplay.textContent = globalScore;
+
+            quizScores[currentFlatIndex].correct += newlyCorrect;
+
+            const entry = flatQuizzes[currentFlatIndex];
+            moduleScores[entry.moduleIdx].correct += newlyCorrect;
+
+            buildSidebar();
+
+            // Feedback
+            if (allCorrect) {
+                feedbackMsg.innerHTML = `<span class="text-green-400 flex items-center"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 0 Errors, 0 Warnings. Build Succeeded.</span>`;
+            } else {
+                feedbackMsg.innerHTML = `<span class="text-red-400 flex items-center"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Compilation Error: Please check the highlighted variables.</span>`;
+            }
+        });
+
+        // =====================================================================
+        // Navigation
+        // =====================================================================
+        prevBtn.addEventListener('click', () => {
+            if (currentFlatIndex > 0) loadQuiz(currentFlatIndex - 1);
+        });
+        nextBtn.addEventListener('click', () => {
+            if (currentFlatIndex < flatQuizzes.length - 1) loadQuiz(currentFlatIndex + 1);
+        });
+
+        // =====================================================================
+        // Init
+        // =====================================================================
+        totalDisplay.textContent = totalBlanks;
+        buildSidebar();
+        loadQuiz(0);
+    </script>
+</body>
+
+</html>

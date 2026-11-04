@@ -56,8 +56,12 @@ for n_estimators in n_estimators_options:
 
 print(f'Best Score: {best_score:.2f}')
 print('Best Parameters:', best_params)
-
 ```
+
+*Best Score: 1.00 
+Best Parameters: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2}*
+
+--- 
 
 **Grid Search Hyperparameter Optimization**
 
@@ -103,6 +107,11 @@ test_accuracy = accuracy_score(y_test, test_predictions)
 print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
 
 ```
+*Best Parameters: {'max_depth': None, 'min_samples_split': 2, 'n_estimators': 100} 
+Best Score: 0.94 
+Test Accuracy: 100.00%*
+
+---
 
 **Randomized Search Hyperparameter Optimization**
 
@@ -132,8 +141,7 @@ param_dist = {
 }
 
 # Initialize RandomizedSearchCV
-random_search = RandomizedSearchCV(estimator=model, param_distributions=param_dist, 
-                                   n_iter=100, cv=5, n_jobs=-1, random_state=42, scoring='accuracy')
+random_search = RandomizedSearchCV(estimator=model, param_distributions=param_dist,n_iter=100, cv=5, n_jobs=-1, random_state=42, scoring='accuracy')
 
 # Fit the model
 random_search.fit(X_train, y_train)
@@ -147,9 +155,13 @@ best_model = random_search.best_estimator_
 test_predictions = best_model.predict(X_test)
 test_accuracy = accuracy_score(y_test, test_predictions)
 print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
-
 ```
 
+*Best Parameters: {'max_depth': 20, 'min_samples_split': 5, 'n_estimators': 142} 
+Best Score: 0.94 
+Test Accuracy: 100.00%*
+
+---
 **Bayesian Optimization**
 
 ```python
@@ -203,9 +215,12 @@ optimizer.maximize(
 # Print the best parameters and the corresponding score
 print(f"Best Parameters: {optimizer.max['params']}")
 print(f"Best Score: {optimizer.max['target']:.2f}")
-
 ```
 
+*Best Parameters: {'n_estimators': np.float64(106.18101782710437), 'max_depth': np.float64(29.01428612819832), 'min_samples_split': np.float64(7.855951534491241)} 
+Best Score: 1.00*
+
+---
 ## 2. Data Splitting and Validation Techniques
 
 **Hold-Out Training and Test Split**
@@ -227,7 +242,10 @@ print(f'Training set size: {X_train.shape[0]} samples')
 print(f'Test set size: {X_test.shape[0]} samples')
 
 ```
+*Training set size: 120 samples 
+Test set size: 30 samples*
 
+---
 **Training, Validation, and Test Split**
 
 ```python
@@ -252,7 +270,11 @@ print(f'Validation set size: {X_val.shape[0]} samples')
 print(f'Test set size: {X_test.shape[0]} samples')
 
 ```
+*Training set size: 90 samples 
+Validation set size: 30 samples 
+Test set size: 30 samples*
 
+---
 **Random Sampling Partitioning**
 
 ```python
@@ -283,9 +305,11 @@ y_train, y_test = y[train_indices], y[test_indices]
 # Output the sizes of the splits to verify
 print(f'Training set size: {X_train.shape[0]} samples')
 print(f'Test set size: {X_test.shape[0]} samples')
-
 ```
+*Training set size: 120 samples 
+Test set size: 30 samples*
 
+---
 **K-Fold Cross-Validation**
 
 ```python
@@ -310,9 +334,11 @@ scores = cross_val_score(model, X, y, cv=kf, scoring='accuracy')
 # Output the scores for each fold and the mean score
 print(f'Cross-validation scores: {scores}')
 print(f'Mean cross-validation score: {scores.mean():.2f}')
-
 ```
+*Cross-validation scores: [1.         0.96666667 0.93333333 0.93333333 0.96666667]
+Mean cross-validation score: 0.96*
 
+---
 **Stratified Cross-Validation**
 
 ```python
@@ -337,9 +363,11 @@ scores = cross_val_score(model, X, y, cv=skf, scoring='accuracy')
 # Output the scores for each fold and the mean score
 print(f'Stratified Cross-validation scores: {scores}')
 print(f'Mean stratified cross-validation score: {scores.mean():.2f}')
-
 ```
+*Stratified Cross-validation scores: [0.96666667 0.96666667 0.93333333 0.96666667 0.9       ]
+Mean stratified cross-validation score: 0.95*
 
+---
 **Leave-One-Out Cross-Validation (LOOCV)**
 
 ```python
@@ -363,19 +391,24 @@ scores = cross_val_score(model, X, y, cv=loo, scoring='accuracy')
 
 # Output the mean score
 print(f'LOOCV mean accuracy score: {scores.mean():.2f}')
-
 ```
+*LOOCV mean accuracy score: 0.95*
 
+---
 **Shuffle-Split Cross-Validation**
 
 ```python
 from sklearn.model_selection import ShuffleSplit
-shuffle_split = ShuffleSplit(test_size=.5, train_size=.5, n_splits=10)
+from sklearn.linear_model import LogisticRegression 
+logreg = LogisticRegression(random_state=42)
+
+shuffle_split = ShuffleSplit(test_size=.5, train_size=.5, n_splits=10, random_state=42)
 scores = cross_val_score(logreg, iris.data, iris.target, cv=shuffle_split)
 print("Cross-validation scores: \n{}".format(scores))
-
 ```
+*Cross-validation scores: [1. 0.98666667 0.94666667 0.94666667 0.93333333 0.96 0.96 0.97333333 0.97333333 0.92 ]*
 
+---
 ## 3. Classification Metrics & Confusion Matrices
 
 **Calculating Macro-Averaged Precision, Recall, and F1-Score**
@@ -408,9 +441,12 @@ f1 = f1_score(y_test, predictions, average='macro')
 print(f'Precision: {precision:.2f}')
 print(f'Recall: {recall:.2f}')
 print(f'F1 Score: {f1:.2f}')
-
 ```
+*Precision: 1.00
+Recall: 1.00
+F1 Score: 1.00*
 
+---
 **Generating Confusion Matrix and Visualization**
 
 ```python
@@ -429,18 +465,34 @@ from sklearn.metrics import ConfusionMatrixDisplay
 disp = ConfusionMatrixDisplay(confusion_matrix=cm)
 disp.plot(cmap=plt.cm.Blues)
 plt.show()
-
 ```
+*[[19 0 0] 
+[ 0 13 0] 
+[ 0 0 13]]*
 
+![[Pasted image 20261104154535.png]]
+
+---
 **Generating Classification Report**
 
 ```python
 from sklearn.metrics import classification_report
 report = classification_report(y_test, y_pred, target_names=iris.target_names)
 print(report)
-
 ```
 
+|                  | Precision | Recall | F1-Score | Support |
+| :--------------- | :-------: | :----: | :------: | :-----: |
+| **setosa**       |   1.00    |  1.00  |   1.00   |   19    |
+| **versicolor**   |   1.00    |  1.00  |   1.00   |   13    |
+| **virginica**    |   1.00    |  1.00  |   1.00   |   13    |
+|                  |           |        |          |         |
+| **accuracy**     |           |        |   1.00   |   45    |
+| **macro avg**    |   1.00    |  1.00  |   1.00   |   45    |
+| **weighted avg** |   1.00    |  1.00  |   1.00   |   45    |
+|                  |           |        |          |         |
+
+---
 **Calculating Specificity**
 
 ```python
@@ -462,32 +514,40 @@ tn, fp, fn, tp = cm.ravel()
 # Calculate specificity
 specificity = tn / (tn + fp)
 print(f'Specificity: {specificity:.2f}')
-
 ```
+*Confusion Matrix:
+[[5 1]
+ [1 3]]
+Specificity: 0.83*
 
+---
 **ROC-AUC Calculation and Plotting**
 
 ```python
 from sklearn.metrics import roc_auc_score, roc_curve
+import matplotlib.pyplot as plt
 
-# Predict probabilities
-y_probs = model.predict_proba(X_test)[:, 1]
+# Binarize y_test so class 1 is positive (1) and everything else is negative (0)
+y_test_binary = (y_test == 1).astype(int)
+
+# Grab probabilities for class 1
+y_probs_class1 = model.predict_proba(X_test)[:, 1]
 
 # Compute AUC
-auc_score = roc_auc_score(y_test, y_probs)
-print(f'AUC: {auc_score:.2f}')
+auc = roc_auc_score(y_test_binary, y_probs_class1)
+print(f'AUC (Class 1 vs Rest): {auc:.2f}')
 
 # Plot ROC Curve
-fpr, tpr, _ = roc_curve(y_test, y_probs)
-plt.plot(fpr, tpr, label=f'AUC = {auc_score:.2f}')
+fpr, tpr, _ = roc_curve(y_test_binary, y_probs_class1)
+plt.plot(fpr, tpr, label=f'AUC = {auc:.2f}')
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('ROC Curve')
+plt.title('ROC Curve (Class 1)')
 plt.legend(loc='lower right')
 plt.show()
-
 ```
 
+![[Pasted image 20261104161343.png]]
 ## 4. Regression Metrics
 
 **Mean Absolute Error (MAE)**
@@ -500,9 +560,10 @@ predicted_values = [2.1, 3.9, 1.7, 3.8, 5.0]
 
 mae = mean_absolute_error(true_values, predicted_values)
 print('Mean Absolute Error: ', round(mae, 2))
-
 ```
+*Mean Absolute Error:  0.22*
 
+---
 **Mean Squared Error (MSE)**
 
 ```python
@@ -513,13 +574,13 @@ predicted_values = [2.1, 3.9, 1.7, 3.8, 5.0]
 
 mse = mean_squared_error(true_values, predicted_values)
 print('Mean Squared Error: ', round(mse, 2))
-
 ```
+*Mean Squared Error: 0.06*
 
+---
 **Root Mean Squared Error (RMSE)**
 
 ```python
-from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 import numpy as np
 
@@ -530,9 +591,10 @@ predicted_prices = np.array([240000, 310000, 210000, 380000, 340000])
 # Calculate RMSE
 rmse = np.sqrt(mean_squared_error(true_prices, predicted_prices))
 print('Root Mean Squared Error: ', round(rmse, 2))
-
 ```
+*Root Mean Squared Error:  12649.11*
 
+---
 **R-Squared ($R^2$) Score**
 
 ```python
@@ -543,5 +605,5 @@ predicted_values = [2.1, 3.9, 1.7, 3.8, 5.0]
 
 r2 = r2_score(true_values, predicted_values)
 print('R-squared (R²) Score: ', round(r2, 2))
-
 ```
+*R-squared (R²) Score: 0.96*
