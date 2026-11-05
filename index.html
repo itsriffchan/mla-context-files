@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Machine Learning Algorithms - reviewer</title>
+    <title>Machine Learning Algorithms - Reviewer</title>
 
     <!-- Tailwind CSS for Layout -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -273,7 +273,7 @@
                 <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <div class="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
-            <h1 class="text-gray-300 font-semibold text-sm tracking-wide">Machine Learning Algorithms - reviewer</h1>
+            <h1 class="text-gray-300 font-semibold text-sm tracking-wide">Machine Learning Algorithms - Reviewer</h1>
         </div>
         <div class="flex flex-wrap items-center gap-3 text-sm font-medium" aria-live="polite">
             <div class="bg-blue-900/50 text-blue-300 px-4 py-1.5 rounded-full border border-blue-700/50 shadow-inner">
@@ -294,7 +294,7 @@
         <div class="p-4 min-h-0 overflow-auto custom-scrollbar">
             <p id="mistake-empty" class="text-sm text-gray-400">No mistakes yet. Wrong or empty answers will appear here when you check.</p>
             <table id="mistake-table" class="hidden w-full table-fixed text-sm text-left">
-                <caption class="text-left text-xs text-gray-400 pb-3">In quiz and code order. Adjacent blanks are grouped, with entries and answers in the same order. Attempts stay here until you reset.</caption>
+                <caption class="text-left text-xs text-gray-400 pb-3">Grouped by module and file. Attempts stay here until you reset.</caption>
                 <thead class="text-gray-400">
                     <tr>
                         <th scope="col" class="w-1/2 p-2">Code line</th>
@@ -459,7 +459,7 @@ for __B11__ in __B12__:
 
 print(f'Best Score: {best_score:.2f}')
 print('Best Parameters:', best_params)`,
-                        answers: ["datasets", "model_selection", "ensemble", "metrics", "datasets", "load_iris", "data", "target", "test_size", "n_estimators_options", "min_samples_split_options", "n_estimators", "n_estimators_options", "min_samples_split", "min_samples_split_options", "y_test"]
+                        answers: ["datasets","model_selection","ensemble","metrics","datasets","load_iris","data","target","test_size","n_estimators_options","min_samples_split_options","n_estimators","n_estimators_options","min_samples_split","min_samples_split_options","y_test"]
                     },
                     {
                         title: "2. Grid Search Optimization",
@@ -502,8 +502,9 @@ print(f'Best Score: {grid_search.best_score_:.2f}')
 best_model = grid_search.__B9__
 test_predictions = best_model.predict(__B10__)
 test_accuracy = accuracy_score(y_test, test_predictions)
-print(f'Test Accuracy: {test_accuracy * 100:.2f}%')`,
-                        answers: ["GridSearchCV", "RandomForestClassifier", "accuracy_score", "RandomForestClassifier", "GridSearchCV", "estimator", "param_grid", "-1", "scoring", "best_estimator_", "X_test"]
+print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
+`,
+                        answers: ["GridSearchCV","RandomForestClassifier","accuracy_score","RandomForestClassifier","GridSearchCV","estimator","param_grid","-1","scoring","best_estimator_","X_test"]
                     },
                     {
                         title: "3. Randomized Search Optimization",
@@ -540,8 +541,14 @@ __B7__.fit(X_train, y_train)
 
 # Print the best parameters and the corresponding score
 print(f'Best Parameters: {random_search.best_params_}')
-print(f'Best Score: {random_search.best_score_:.2f}')`,
-                        answers: ["RandomizedSearchCV", "scipy", "stats", "RandomizedSearchCV", "param_distributions", "cv", "accuracy", "random_search"]
+print(f'Best Score: {random_search.best_score_:.2f}')
+
+# Evaluate the best model on the test set
+best_model = random_search.best_estimator_
+test_predictions = best_model.predict(X_test)
+test_accuracy = accuracy_score(y_test, test_predictions)
+print(f'Test Accuracy: {test_accuracy * 100:.2f}%')`,
+                        answers: ["RandomizedSearchCV","scipy","stats","RandomizedSearchCV","param_distributions","cv","accuracy","random_search"]
                     },
                     {
                         title: "4. Bayesian Optimization",
@@ -563,9 +570,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 # Define the function to optimize
 def rf_cv(n_estimators, max_depth, min_samples_split):
     model = RandomForestClassifier(
-        n_estimators=int(n_estimators),
-        max_depth=int(max_depth),
-        min_samples_split=int(min_samples_split),
+        n_estimators=__B1__(n_estimators),
+        max_depth=__B2__(max_depth),
+        min_samples_split=__B3__(min_samples_split),
         random_state=42
     )
     model.fit(X_train, y_train)
@@ -581,25 +588,102 @@ param_bounds = {
 }
 
 # Initialize Bayesian Optimization
-optimizer = __B1__(
-    __B2__=rf_cv,
-    __B3__=param_bounds,
+optimizer = __B4__(
+    __B5__=rf_cv,
+    __B6__=param_bounds,
     random_state=42
 )
 
 # Perform optimization
-optimizer.__B4__(
-    __B5__=5,
+optimizer.__B7__(
+    __B8__=5,
     n_iter=25
 )
 
 # Print the best parameters and the corresponding score
 print(f"Best Parameters: {optimizer.max['params']}")
-print(f"Best Score: {optimizer.max['__B6__']:.2f}")`,
-                        answers: ["BayesianOptimization", "BayesianOptimization", "f", "pbounds", "maximize", "init_points", "target"]
+print(f"Best Score: {optimizer.max['__B9__']:.2f}")`,
+                        answers: ["BayesianOptimization","int","int","int","BayesianOptimization","f","pbounds","maximize","init_points","target"]
                     },
                     {
-                        title: "5. K-Fold Cross-Validation",
+                        title: "5. Hold-Out Training and Test Split",
+                        filename: "holdout_split.py",
+                        code: `from sklearn import datasets
+from sklearn.model_selection import train_test_split
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.__B0__
+y = iris.__B1__
+
+# Split the data into training and test sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Output the sizes of the splits to verify
+print(f'Training set size: {X_train.shape[0]} samples')
+print(f'Test set size: {X_test.shape[0]} samples')
+`,
+                        answers: ["data","target"]
+                    },
+                    {
+                        title: "6. Training, Validation, and Test Split",
+                        filename: "train_validation_test_split.py",
+                        code: `from sklearn import datasets
+from sklearn.model_selection import train_test_split
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# First, split the data into training + validation and testing sets (80% - 20%)
+__B0__, X_test, __B1__, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Then, split the training + validation set into training and validation sets 
+# (80% - 20% of the remaining 80%)
+X_train, __B2__, y_train, __B3__ = train_test_split(__B4__, __B5__, test_size=0.25, random_state=42)
+
+# Output the sizes of the splits to verify
+print(f'Training set size: {X_train.shape[0]} samples')
+print(f'Validation set size: {X_val.shape[0]} samples')
+print(f'Test set size: {X_test.shape[0]} samples')
+`,
+                        answers: ["X_train_val","y_train_val","X_val","y_val","X_train_val","y_train_val"]
+                    },
+                    {
+                        title: "7. Random Sampling Partitioning",
+                        filename: "random_sampling.py",
+                        code: `import numpy as np
+from sklearn import datasets
+
+# Load the Iris dataset
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# Define the split ratio
+test_ratio = 0.2
+total_samples = X.shape[0]
+test_size = int(total_samples * test_ratio)
+
+# Generate random indices
+np.random.__B0__(42)  # For reproducibility
+indices = np.random.__B1__(total_samples)
+
+# Split the data
+test_indices = indices[:test_size]
+train_indices = indices[test_size:]
+
+X_train, X_test = X[train_indices], X[test_indices]
+y_train, y_test = y[train_indices], y[test_indices]
+
+# Output the sizes of the splits to verify
+print(f'Training set size: {X_train.shape[0]} samples')
+print(f'Test set size: {X_test.shape[0]} samples')`,
+                        answers: ["seed","permutation"]
+                    },
+                    {
+                        title: "8. K-Fold Cross-Validation",
                         filename: "kfold_cv.py",
                         code: `from sklearn import datasets
 from sklearn.model_selection import __B0__, __B1__
@@ -621,11 +705,11 @@ scores = cross_val_score(model, X, y, __B4__=kf, scoring='accuracy')
 
 # Output the scores for each fold and the mean score
 print(f'Cross-validation scores: {scores}')
-print(f'Mean cross-validation score: {__B5__.__B6__() :.2f}')`,
-                        answers: ["KFold", "cross_val_score", "n_splits", "shuffle", "cv", "scores", "mean"]
+print(f'Mean cross-validation score: {__B5__.__B6__():.2f}')`,
+                        answers: ["KFold","cross_val_score","n_splits","shuffle","cv","scores","mean"]
                     },
                     {
-                        title: "6. Stratified Cross-Validation",
+                        title: "9. Stratified Cross-Validation",
                         filename: "stratified_cv.py",
                         code: `from sklearn import datasets
 from sklearn.model_selection import __B0__, __B1__
@@ -647,11 +731,11 @@ scores = __B4__(model, X, y, cv=skf, scoring='accuracy')
 
 # Output the scores for each fold and the mean score
 print(f'Stratified Cross-validation scores: {scores}')
-print(f'Mean stratified cross-validation score: {__B5__.__B6__() :.2f}')`,
-                        answers: ["StratifiedKFold", "cross_val_score", "StratifiedKFold", "True", "cross_val_score", "scores", "mean"]
+print(f'Mean stratified cross-validation score: {__B5__.__B6__():.2f}')`,
+                        answers: ["StratifiedKFold","cross_val_score","StratifiedKFold","True","cross_val_score","scores","mean"]
                     },
                     {
-                        title: "7. Leave-One-Out (LOOCV)",
+                        title: "10. Leave-One-Out (LOOCV)",
                         filename: "loocv.py",
                         code: `from sklearn import datasets
 from sklearn.model_selection import __B0__, __B1__
@@ -672,23 +756,23 @@ loo = __B2__()
 scores = __B3__(model, X, y, __B4__=loo, __B5__='accuracy')
 
 # Output the mean score
-print(f'LOOCV mean accuracy score: {scores.__B6__() :.2f}')`,
-                        answers: ["LeaveOneOut", "cross_val_score", "LeaveOneOut", "cross_val_score", "cv", "scoring", "mean"]
+print(f'LOOCV mean accuracy score: {scores.__B6__():.2f}')`,
+                        answers: ["LeaveOneOut","cross_val_score","LeaveOneOut","cross_val_score","cv","scoring","mean"]
                     },
                     {
-                        title: "8. Shuffle-Split CV",
+                        title: "11. Shuffle-Split CV",
                         filename: "shuffle_split.py",
-                        code: `from sklearn.model_selection import __B0__, cross_val_score
+                        code: `from sklearn.model_selection import __B0__
 from sklearn.linear_model import LogisticRegression 
 logreg = LogisticRegression(random_state=42)
 
 shuffle_split = __B1__(test_size=.5, train_size=.5, __B2__=10, random_state=42)
 scores = cross_val_score(logreg, iris.data, iris.target, cv=shuffle_split)
 print("Cross-validation scores: \\n{}".format(scores))`,
-                        answers: ["ShuffleSplit", "ShuffleSplit", "n_splits"]
+                        answers: ["ShuffleSplit","ShuffleSplit","n_splits"]
                     },
                     {
-                        title: "9. Precision, Recall, and F1",
+                        title: "12. Precision, Recall, and F1",
                         filename: "classification_metrics.py",
                         code: `from sklearn.metrics import __B0__, __B1__, __B2__
 from sklearn.model_selection import train_test_split
@@ -717,10 +801,10 @@ f1 = __B11__(y_test, predictions, average='macro')
 print(f'Precision: {precision:.2f}')
 print(f'Recall: {recall:.2f}')
 print(f'F1 Score: {f1:.2f}')`,
-                        answers: ["precision_score", "recall_score", "f1_score", "X_train", "X_test", "y_train", "y_test", "RandomForestClassifier", "fit", "precision_score", "recall_score", "f1_score"]
+                        answers: ["precision_score","recall_score","f1_score","X_train","X_test","y_train","y_test","RandomForestClassifier","fit","precision_score","recall_score","f1_score"]
                     },
                     {
-                        title: "10. Confusion Matrix",
+                        title: "13. Confusion Matrix",
                         filename: "confusion_matrix.py",
                         code: `from sklearn.ensemble import RandomForestClassifier
 classifier = RandomForestClassifier(n_estimators=10, __B0__="entropy")
@@ -737,10 +821,10 @@ from sklearn.metrics import ConfusionMatrixDisplay
 disp = ConfusionMatrixDisplay(__B3__=cm)
 __B4__.plot(cmap=plt.cm.Blues)
 plt.show()`,
-                        answers: ["criterion", "classifier", "y_test", "confusion_matrix", "disp"]
+                        answers: ["criterion","classifier","y_test","confusion_matrix","disp"]
                     },
                     {
-                        title: "11. Regression Metrics (MAE/MSE)",
+                        title: "14. Regression Metrics (MAE/MSE)",
                         filename: "regression_metrics.py",
                         code: `from sklearn.metrics import __B0__
 
@@ -753,12 +837,15 @@ print('Mean Absolute Error: ', round(mae, 2))
 # --- Mean Squared Error ---
 from sklearn.metrics import __B3__
 
+true_values = [2.5, 3.7, 1.8, 4.0, 5.2]
+predicted_values = [2.1, 3.9, 1.7, 3.8, 5.0]
+
 mse = __B4__(__B5__, predicted_values)
 print('Mean Squared Error: ', round(mse, 2))`,
-                        answers: ["mean_absolute_error", "mean_absolute_error", "predicted_values", "mean_squared_error", "mean_squared_error", "true_values"]
+                        answers: ["mean_absolute_error","mean_absolute_error","predicted_values","mean_squared_error","mean_squared_error","true_values"]
                     },
                     {
-                        title: "12. Regression Metrics (RMSE/R2)",
+                        title: "15. Regression Metrics (RMSE/R2)",
                         filename: "regression_metrics_2.py",
                         code: `from sklearn.metrics import mean_squared_error
 import numpy as np
@@ -779,17 +866,10 @@ predicted_values = [2.1, 3.9, 1.7, 3.8, 5.0]
 
 r2 = __B2__(true_values, __B3__)
 print('R-squared (R²) Score: ', round(r2, 2))`,
-                        answers: ["sqrt", "r2_score", "r2_score", "predicted_values"]
+                        answers: ["sqrt","r2_score","r2_score","predicted_values"]
                     }
                 ]
             }
-            // ─── ADD MORE MODULES HERE ───
-            // ,{
-            //     name: "M6 — Feature Engineering",
-            //     folder: "m6_feature_engineering",
-            //     expanded: false,
-            //     quizzes: [ ... ]
-            // }
         ];
 
         // =====================================================================
@@ -953,12 +1033,42 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
             mistakeList.innerHTML = '';
             mistakeEmpty.classList.toggle('hidden', mistakeHistory.length > 0);
             mistakeTable.classList.toggle('hidden', mistakeHistory.length === 0);
+            let previousModule = -1;
+            let previousFile = -1;
             [...mistakeHistory].sort((a, b) => a.flatIndex - b.flatIndex || a.position - b.position).forEach(mistake => {
+                const source = flatQuizzes[mistake.flatIndex];
+
+                if (source.moduleIdx !== previousModule) {
+                    const moduleRow = document.createElement('tr');
+                    const moduleCell = document.createElement('th');
+                    moduleCell.colSpan = 3;
+                    moduleCell.scope = 'colgroup';
+                    moduleCell.className = 'border-t border-gray-600 bg-gray-800/80 px-2 py-2 text-left text-xs font-semibold text-gray-300';
+                    moduleCell.textContent = `📂 ${source.moduleName.replace(/^M(\d+)\b/, 'Module $1')}`;
+                    moduleRow.appendChild(moduleCell);
+                    mistakeList.appendChild(moduleRow);
+                    previousModule = source.moduleIdx;
+                    previousFile = -1;
+                }
+
+                if (mistake.flatIndex !== previousFile) {
+                    const fileRow = document.createElement('tr');
+                    const fileCell = document.createElement('th');
+                    fileCell.colSpan = 3;
+                    fileCell.scope = 'colgroup';
+                    fileCell.className = 'border-t border-gray-700 bg-gray-900/40 px-2 py-1.5 text-left text-xs font-normal text-blue-300';
+                    const title = source.quiz.title.replace(/^(\d+)\.\s*/, 'No. $1 · ');
+                    fileCell.textContent = `└─ 📄 ${title}  ·  ${source.quiz.filename}`;
+                    fileRow.appendChild(fileCell);
+                    mistakeList.appendChild(fileRow);
+                    previousFile = mistake.flatIndex;
+                }
+
                 const row = document.createElement('tr');
                 row.className = 'border-t border-gray-700';
                 const contextCell = document.createElement('th');
                 contextCell.scope = 'row';
-                contextCell.className = 'p-2 align-top font-normal text-gray-300';
+                contextCell.className = 'p-2 pl-6 align-top font-normal text-gray-300';
                 const codeLine = document.createElement('code');
                 codeLine.style.whiteSpace = 'pre-wrap';
                 codeLine.style.overflowWrap = 'anywhere';
@@ -1296,7 +1406,9 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
 
             // Feedback
             if (allCorrect) {
-                feedbackMsg.innerHTML = `<span class="text-green-400 flex items-center"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 0 Errors, 0 Warnings. Build Succeeded.</span>`;
+                const nextHint = currentFlatIndex < flatQuizzes.length - 1
+                    ? '<span class="ml-2 text-xs text-gray-400">Press Enter → next file</span>' : '';
+                feedbackMsg.innerHTML = `<span class="text-green-400 flex items-center"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 0 Errors, 0 Warnings. Build Succeeded.${nextHint}</span>`;
             } else {
                 feedbackMsg.innerHTML = `<span class="text-red-400 flex items-center"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Compilation Error: Please check the highlighted variables.</span>`;
             }
@@ -1307,6 +1419,15 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
                 event.shiftKey || event.isComposing || mistakeReview.open || resetConfirmation.open) return;
             event.preventDefault();
             if (!event.repeat) checkBtn.click();
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey ||
+                event.isComposing || event.repeat || mistakeReview.open || resetConfirmation.open ||
+                currentFlatIndex >= flatQuizzes.length - 1 ||
+                quizScores[currentFlatIndex].correct !== quizScores[currentFlatIndex].total) return;
+            event.preventDefault();
+            loadQuiz(currentFlatIndex + 1);
         });
 
         reviewMistakesBtn.addEventListener('click', () => {
