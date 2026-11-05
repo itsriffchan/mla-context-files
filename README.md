@@ -7,9 +7,9 @@ OMG yes so fun this is so FUN i LOVE machine learning this is SOO FUN AND NOT TE
 - copy the github link
 - paste it in your preferred LLM and prompt it to create fill-in-the-blank questions. Focus on a topic if you'd like. Prompt as necessary.
 
-## Practice notebooks and checkers
+## Do you need to lock in so bad and suffer through HARD coding?
 
-The [YouHateYourself](YouHateYourself/) folder are practice exercises meant to be checked with their respective Python (`.py`) checker. Match each exercise to the checker for the same module.
+The [YouHateYourself](YouHateYourself/) folder are practice exercises meant to be checked with their respective Python (`.py`) checker. Manually code each line according to what is taught in the modules.
 
 Easiest way to do this is by cloning the repository. 
 ```sh
