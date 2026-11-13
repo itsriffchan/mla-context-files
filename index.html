@@ -79,6 +79,10 @@
             padding: 1.5rem !important;
         }
 
+        #code-display .token.comment {
+            color: #d4b568;
+        }
+
         /* Sidebar per-quiz score badge */
         .quiz-score-badge {
             font-size: 0.65rem;
@@ -402,6 +406,343 @@
         // To add a new module, just push another object into this array.
         // =====================================================================
         const modules = [
+            {
+                name: "M2 — Trees & Ensembles",
+                folder: "m2_trees_and_ensembles",
+                // Keep the saved-progress namespace stable when renaming the folder.
+                progressFolder: "m2_decision_trees_random_forests",
+                expanded: true,
+                // Answer keys: decision_random_forest.md and gradient-boosting.md.
+                // The gradient boosting blanks follow the updated basis.md.
+                // Each quiz is a separate workflow, with prerequisites before use.
+                quizzes: [
+                    {
+                        title: "1. Decision Tree Regression — Data to Prediction",
+                        filename: "decision_tree_regression.py",
+                        code: `import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.tree import __B0__
+from sklearn.tree import __B1__
+from sklearn.__B2__ import mean_squared_error, mean_absolute_error, r2_score
+
+# Load data: first 3 features predict continuous petal width
+iris = __B3__()
+X = iris.data[__B4__]
+y = iris.__B5__[__B6__]
+feature_names = iris.__B7__[:3]
+print(feature_names)
+
+# Split before fitting the CART regressor
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+cart_reg_model = __B8__(criterion="__B9__", max_depth=4,
+    min_samples_split=5, min_samples_leaf=2, random_state=42)
+cart_reg_model.fit(X_train, y_train)
+
+# Predict on held-out data and calculate regression metrics
+y_pred = cart_reg_model.__B10__(__B11__)
+mse = __B12__(y_test, y_pred)
+mae = __B13__(y_test, y_pred)
+r2 = __B14__(y_test, y_pred)
+
+print("Model Performance")
+print("-------------------------")
+print(f"MSE : {mse:.4f}")
+print(f"MAE : {mae:.4f}")
+print(f"R²  : {r2:.4f}")
+
+# New input uses the same feature order as the training data:
+# sepal_length, sepal_width, petal_length
+new_flower = [[5.1, 3.5, 1.4]]
+predicted_petal_width = __B15__.predict(new_flower)
+print("\\nPrediction")
+print("-------------------------")
+print("Input:", new_flower)
+print("Predicted Petal Width:", round(predicted_petal_width[0], 3))
+
+# Visualize the fitted tree
+# In Jupyter, you can also run: %matplotlib inline
+plt.figure(figsize=(20, 8))
+__B16__(__B17__, filled=True, feature_names=feature_names, rounded=True, fontsize=9)
+plt.show()`,
+                        answers: ["DecisionTreeRegressor", "plot_tree", "metrics", "load_iris", ":, :3", "data", ":, 3", "feature_names", "DecisionTreeRegressor", "squared_error", "predict", "X_test", "mean_squared_error", "mean_absolute_error", "r2_score", "cart_reg_model", "plot_tree", "cart_reg_model"]
+                    },
+                    {
+                        title: "2. Random Forest Classification — Select, Retrain, Compare",
+                        filename: "random_forest_classification.py",
+                        code: `# Compare a model using all inputs with one using a smaller subset.
+import pandas as pd
+import numpy as np
+from sklearn.datasets import __B0__
+from sklearn.__B1__ import train_test_split
+from sklearn.__B2__ import RandomForestClassifier
+
+# Build a controlled two-group problem with both signal and noise.
+# No external data file is needed for this experiment.
+X, y = make_classification(__B3__=1000, n_features=20,
+    n_informative=5, n_redundant=2, n_repeated=0,
+    n_classes=2, random_state=42)
+# Give inputs stable labels so a chosen subset can be reused later.
+feature_names = [f'feature_{i}' for i in range(X.shape[1])]
+X = pd.DataFrame(X, columns=feature_names)
+y = pd.Series(y)
+# Reserve some examples to check how well the models generalize.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Establish a baseline using all available inputs.
+rf = RandomForestClassifier(n_estimators=10, random_state=42)
+rf.fit(X_train, y_train)
+# Summarize the fitted model's assessment of each input.
+importances = rf.__B4__
+feature_names = X.columns
+feature_importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=__B5__)
+print(feature_importance_df)
+
+# Retain the strongest candidates and use the same columns in both splits.
+top_features = feature_importance_df['Feature'][:10].values
+X_train_selected = X_train[top_features]
+X_test_selected = X_test[top_features]
+# Train a second model on the reduced input set.
+rf_selected = __B6__(__B7__=100, random_state=42)
+rf_selected.fit(X_train_selected, y_train)
+
+# Compare both models on the reserved examples.
+accuracy_before = rf.score(__B8__, __B9__)
+print(f'Accuracy before feature selection: {accuracy_before:.2f}')
+accuracy_after = rf_selected.score(__B10__, __B11__)
+print(f'Accuracy after feature selection: {accuracy_after:.2f}')
+# The models also use different numbers of trees, so any change
+# cannot be attributed to the smaller input set alone.`,
+                        answers: ["make_classification", "model_selection", "ensemble", "n_samples", "feature_importances_", "False", "RandomForestClassifier", "n_estimators", "X_test", "y_test", "X_test_selected", "y_test"]
+                    },
+                    {
+                        title: "3. Random Forest Regression — Feature Selection with RFECV",
+                        filename: "random_forest_regression_rfecv.py",
+                        code: `import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.__B0__ import __B1__
+
+# The source's CSV example assumes X_train and y_train already exist.
+# Use the Iris regression setup here to make this workflow self-contained.
+iris = load_iris()
+X = pd.DataFrame(iris.data[:, :3], columns=iris.feature_names[:3])
+y = iris.data[:, 3]
+features = X.columns
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Use a regressor with the source's regression scoring metric
+rf = RandomForestRegressor(random_state=0)
+rf.fit(X_train, y_train)
+
+# Select features using only training data and five-fold CV
+rfe = __B2__(rf, cv=5, scoring="__B3__")
+rfe.fit(X_train, y_train)
+selected_features_mask = rfe.__B4__
+selected_features = features[selected_features_mask]
+print(selected_features)`,
+                        answers: ["feature_selection", "RFECV", "RFECV", "neg_mean_squared_error", "support_"]
+                    },
+                    {
+                        title: "4. Gradient Boosting — Wine Classification & Joint Tuning",
+                        filename: "gradient_boosting_wine.py",
+                        code: `# Learn to distinguish wine classes, then compare candidate settings.
+import pandas as pd
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import __B0__
+from sklearn.ensemble import __B1__
+from sklearn.model_selection import GridSearchCV
+
+# Load a built-in problem with labeled columns for inspection.
+wine = datasets.__B2__(as_frame=True)
+wine_data = wine.__B3__
+wine_target = wine.__B4__
+print(wine_data.head())
+print(wine_target.head())
+wine_features = wine.__B5__
+print(wine_features)
+
+# Keep a portion aside while building and comparing models.
+X = wine['data']
+y = wine['target']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=17)
+
+# Establish an initial model using the training portion.
+gbc = __B6__()
+__B7__.fit(X_train, y_train)
+
+# Rotate through training-data partitions and summarize the results.
+cv_score = __B8__(gbc, X_train, y_train, __B9__=3, __B10__=-1).__B11__()
+print("Baseline CV score:", cv_score)
+
+# Explore combinations of ensemble size, step size, and tree complexity.
+param_grid = {
+    'n_estimators': [10, 50, 100, 500],
+    'learning_rate': [0.0001, 0.001, 0.01, 0.1, 1.0],
+    'max_depth': [3, 5, 7, 9]
+}
+gbc2 = __B12__(gbc, param_grid, cv=3, n_jobs=-1)
+gbc2.fit(X_train, y_train)
+
+# Inspect the winning configuration and its validation result.
+print("Best parameters:", gbc2.__B13__)
+print("Best CV score:", gbc2.__B14__)
+
+# Only after choosing settings, evaluate on the reserved examples.
+print("Test score:", gbc2.score(X_test, y_test))`,
+                        answers: ["cross_val_score", "GradientBoostingClassifier", "load_wine", "data", "target", "feature_names", "GradientBoostingClassifier", "gbc", "cross_val_score", "cv", "n_jobs", "mean", "GridSearchCV", "best_params_", "best_score_"]
+                    },
+                    {
+                        title: "5. Gradient Boosting — Income Preparation & Staged Tuning",
+                        filename: "gradient_boosting_income.py",
+                        code: `# Prepare tabular income records, then compare classification settings.
+from sklearn.ensemble import __B0__
+import numpy as np
+import pandas as pd
+from sklearn.__B1__ import StandardScaler
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn import preprocessing
+from sklearn.preprocessing import __B2__
+
+# Place income_evaluation.csv beside the notebook or adjust this path.
+df = pd.read_csv('income_evaluation.csv', skipinitialspace=True)
+print(df.head())
+print(df.columns)
+df.info()
+
+# Normalize header spelling and surrounding text before cleaning.
+df.columns = df.columns.str.strip().str.replace('_', '-', regex=False)
+for column in df.select_dtypes(include=['object', 'string']).columns:
+    df[column] = df[column].str.strip()
+
+# Treat unknown entries consistently before converting the columns.
+df.loc[df['workclass'] == '?', 'workclass'] = np.nan
+df.loc[df['occupation'] == '?', 'occupation'] = np.nan
+df.loc[df['native-country'] == '?', 'native-country'] = np.nan
+df = df.dropna().copy()
+
+# Give each transformed column its own mapping, including the target.
+# This follows the notebook's column choices, including the numeric weight.
+le_workclass = LabelEncoder()
+le_fnlwgt = LabelEncoder()
+le_education = LabelEncoder()
+le_marital_status = LabelEncoder()
+le_occupation = LabelEncoder()
+le_relationship = LabelEncoder()
+le_race = LabelEncoder()
+le_sex = LabelEncoder()
+le_native_country = LabelEncoder()
+le_income = LabelEncoder()
+
+df['workclass'] = le_workclass.fit_transform(df['workclass'])
+df['fnlwgt'] = le_fnlwgt.fit_transform(df['fnlwgt'])
+df['education'] = le_education.fit_transform(df['education'])
+df['marital-status'] = le_marital_status.fit_transform(df['marital-status'])
+df['occupation'] = le_occupation.fit_transform(df['occupation'])
+df['relationship'] = le_relationship.fit_transform(df['relationship'])
+df['race'] = le_race.fit_transform(df['race'])
+df['sex'] = le_sex.fit_transform(df['sex'])
+df['native-country'] = le_native_country.fit_transform(df['native-country'])
+df['income'] = le_income.fit_transform(df['income'])
+print(df)
+df.info()
+
+# Separate the outcome from the inputs and reserve unseen records.
+y = df['income']
+X = df.drop('income', axis=1)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# Begin with the notebook's initial ensemble settings.
+gbc = __B3__(n_estimators=100, __B4__=0.05, random_state=100, max_features=5)
+gbc.fit(X_train, y_train)
+print("Training score:", gbc.score(__B5__, __B6__))
+print("Test score:", gbc.__B7__(X_test, y_test))
+
+# Compare predicted and actual labels, including each type of mistake.
+cm = confusion_matrix(y_test, gbc.predict(X_test))
+print(cm)
+cm_accuracy = np.trace(cm) / cm.sum()
+print("Accuracy from this run:", cm_accuracy)
+
+# Fixed counts from the source notebook illustrate the same calculation.
+# They describe that example, rather than the predictions from this run.
+example_accuracy = (4687 + 874) / (4687 + 231 + 721 + 874)
+print("Notebook example accuracy:", example_accuracy)
+
+# First compare ensemble size and update size using training folds.
+grid = {
+    'learning_rate': [0.01, 0.05, 0.1],
+    'n_estimators': np.arange(100, 500, 100)
+}
+gb = GradientBoostingClassifier()
+gb_cv = GridSearchCV(gb, grid, cv=4)
+gb_cv.fit(X_train, y_train)
+print("Best parameters:", gb_cv.best_params_)
+print("Best CV score:", gb_cv.best_score_)
+print("Test score:", gb_cv.score(X_test, y_test))
+
+# The notebook fixes the following settings for a separate depth search.
+# These constants do not automatically adopt the preceding search result.
+grid = {'max_depth': [2, 3, 4, 5, 6, 7]}
+gb = GradientBoostingClassifier(learning_rate=0.1, n_estimators=400)
+gb_cv = GridSearchCV(gb, grid, cv=4)
+gb_cv.fit(X_train, y_train)
+print("Best parameters:", gb_cv.best_params_)
+print("Best CV score:", gb_cv.best_score_)
+print("Test score:", gb_cv.score(X_test, y_test))`,
+                        answers: ["GradientBoostingClassifier", "preprocessing", "LabelEncoder", "GradientBoostingClassifier", "learning_rate", "X_train", "y_train", "score"]
+                    },
+                    {
+                        title: "6. Gradient Boosting — Diabetes Regression & Feature Importance",
+                        filename: "gradient_boosting_regression.py",
+                        code: `# Predict a continuous outcome, then inspect which inputs influenced the model.
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
+from sklearn.datasets import load_diabetes
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Combine the labeled inputs and outcome for an initial data check.
+data = load_diabetes()
+df = pd.DataFrame(data.data, columns=data.feature_names)
+df['target'] = pd.Series(data.target)
+df.info()
+print(df[df.duplicated()])
+
+# The built-in inputs are numeric and complete; separate the outcome.
+X = df.drop('target', axis=1)
+y = df['target']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=0)
+
+# Fit an ensemble and produce estimates for the reserved records.
+gbr = __B0__(n_estimators=500)
+gbr.fit(X_train, y_train)
+y_pred = gbr.predict(X_test)
+print(y_pred)
+
+# Measure the typical absolute gap between observed and predicted values.
+mae = mean_absolute_error(y_test, y_pred)
+print("MAE:", mae)
+
+# Rank the inputs according to the fitted model and plot the comparison.
+feature_scores = pd.Series(gbr.__B1__, index=X_train.columns).sort_values(ascending=False)
+print(feature_scores)
+sns.barplot(x=feature_scores, y=feature_scores.index)
+plt.xlabel('Feature Importance Score')
+plt.ylabel('Features')
+plt.tight_layout()
+plt.show()`,
+                        answers: ["GradientBoostingRegressor", "feature_importances_"]
+                    }
+                ]
+            },
             {
                 name: "M5 — Model Evaluation",
                 folder: "m5_model_evaluation",
@@ -939,7 +1280,8 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
         const confirmResetBtn = document.getElementById('confirm-reset-btn');
 
         function quizId(entry) {
-            return `${entry.folder}/${entry.quiz.filename}`;
+            const folder = modules[entry.moduleIdx].progressFolder || entry.folder;
+            return `${folder}/${entry.quiz.filename}`;
         }
 
         function quizRevision(quiz) {
