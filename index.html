@@ -407,13 +407,13 @@
         // =====================================================================
         const modules = [
             {
-                name: "M2 — Trees & Ensembles",
-                folder: "m2_trees_and_ensembles",
+                name: "M2 — Supervised Learning",
+                folder: "m2_supervised_learning",
                 // Keep the saved-progress namespace stable when renaming the folder.
                 progressFolder: "m2_decision_trees_random_forests",
                 expanded: true,
-                // Answer keys: decision_random_forest.md and gradient-boosting.md.
-                // The gradient boosting blanks follow the updated basis.md.
+                // Answer keys: decision_random_forest.md, gradient-boosting.md, and SVM.md.
+                // The SVM blanks follow the updated basis.md.
                 // Each quiz is a separate workflow, with prerequisites before use.
                 quizzes: [
                     {
@@ -740,6 +740,119 @@ plt.ylabel('Features')
 plt.tight_layout()
 plt.show()`,
                         answers: ["GradientBoostingRegressor", "feature_importances_"]
+                    },
+                    {
+                        title: "7. SVM — Breast Cancer Classification & Evaluation",
+                        filename: "svm_classification.py",
+                        code: `# Fit a linear boundary between two diagnostic classes.
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import sklearn as sk
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn import svm, metrics
+
+# Inspect the available measurements and the meaning of the class labels.
+data = load_breast_cancer()
+print(list(data.target_names))
+print(list(data.feature_names))
+X = data.data
+y = data.target
+
+# Reserve some records before fitting the notebook's linear baseline.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+classify = __B0__.__B1__(__B2__='linear')
+classify.fit(X_train, y_train)
+
+# Compare predicted and observed labels on records excluded from fitting.
+# The dataset codes benign as the positive class for these binary metrics.
+y_predict = classify.predict(X_test)
+print('Model Accuracy:', round(metrics.accuracy_score(y_test, y_predict), 4))
+print('Precision:', round(metrics.precision_score(y_test, y_predict), 4))
+print('Recall:', round(metrics.__B3__(y_test, y_predict), 4))`,
+                        answers: ["svm", "SVC", "kernel", "recall_score"]
+                    },
+                    {
+                        title: "8. SVM — Iris Kernels, Boundaries & Support Vectors",
+                        filename: "svm_kernel_visualization.py",
+                        code: `# Use two measurements so the model's decisions can be drawn on a plane.
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.__B0__ import __B1__
+from sklearn.metrics import accuracy_score
+import numpy as np
+import matplotlib.pyplot as plt
+
+iris = datasets.load_iris()
+X = iris.data[:, :2]
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# The last setting controls influence width for nonlinear kernels;
+# it has no effect on this linear configuration.
+model = __B2__(kernel='linear', C=1.0, __B3__='scale')
+model.fit(X_train, y_train)
+predictions = model.predict(X_test)
+accuracy = accuracy_score(y_test, predictions)
+print(f'Accuracy: {accuracy * 100:.2f}%')
+
+# Sample a regular grid covering the observed feature ranges.
+h = .02
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.__B4__(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+
+# Classify each grid location and restore the grid's shape for plotting.
+Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+plt.__B5__(xx, yy, Z, alpha=0.8, cmap=plt.cm.coolwarm)
+
+# Show all observed examples for orientation; fitting used only training data.
+plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', cmap=plt.cm.coolwarm)
+plt.xlabel('Sepal Length')
+plt.ylabel('Sepal Width')
+plt.title(f'SVM Decision Boundary ({model.kernel})')
+
+# Circle the training observations that help determine the fitted boundary.
+plt.scatter(model.support_vectors_[:, 0], model.support_vectors_[:, 1],
+    s=100, facecolors='none', edgecolors='k')
+plt.show()`,
+                        answers: ["svm", "SVC", "SVC", "gamma", "meshgrid", "contourf"]
+                    },
+                    {
+                        title: "9. SVM — Kernel & Hyperparameter Search",
+                        filename: "svm_parameter_tuning.py",
+                        code: `# Compare boundary shapes and model settings on the same two-feature problem.
+from sklearn import datasets
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+import numpy as np
+
+iris = datasets.load_iris()
+X = iris.data[:, :2]
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Compare the notebook's three boundary families alongside the numeric settings.
+cSetG = [0.1, 1, 10]
+gammaG = [0.1, 1, 10]
+kernelsG = ['__B0__', '__B1__', '__B2__']
+
+# Compare candidate combinations using folds drawn only from training data.
+model = SVC()
+gridSearch = GridSearchCV(estimator=model,
+    __B3__={'kernel': kernelsG, 'C': cSetG, 'gamma': gammaG}, cv=3)
+gridSearch.fit(X_train, y_train)
+print(f'The best parameter is {gridSearch.best_params_}')
+print(f'The best score is {round(gridSearch.best_score_, 2)}')
+print(f'The best estimator is {gridSearch.best_estimator_}')
+
+# Check the chosen model on examples that did not participate in the search.
+test_predictions = gridSearch.predict(X_test)
+print('Held-out accuracy:', accuracy_score(y_test, test_predictions))`,
+                        answers: ["linear", "rbf", "poly", "param_grid"]
                     }
                 ]
             },
@@ -1503,6 +1616,7 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
                 // ── Folder header row ──
                 const folderRow = document.createElement('div');
                 folderRow.className = 'folder-header';
+                folderRow.title = mod.name;
 
                 const left = document.createElement('div');
                 left.className = 'flex items-center gap-1 truncate';
