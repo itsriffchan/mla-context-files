@@ -4,7 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Machine Learning Algorithms - Reviewer</title>
+    <title>Machine Learning Algorithms - Study Hub</title>
+    <script>
+        document.documentElement.dataset.mode =
+            new URLSearchParams(window.location.search).get('mode') === 'code' ? 'code' : 'home';
+    </script>
 
     <!-- Tailwind CSS for Layout -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -264,11 +268,109 @@
             background: rgba(0, 0, 0, 0.55);
             backdrop-filter: blur(2px);
         }
+
+        /* The landing screen has its own styles; the coder keeps its existing theme. */
+        html[data-mode="home"] body {
+            display: block;
+            height: auto;
+            min-height: 100vh;
+            overflow: auto;
+            background: radial-gradient(ellipse at 50% 0%, #25302c 0%, #111719 65%);
+            color: #edf1ef;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        #coding-app { display: flex; flex-direction: column; height: 100vh; min-width: 0; overflow: hidden; }
+        #coding-app[hidden], #landing-page[hidden] { display: none !important; }
+        html[data-mode="code"] #landing-page { display: none; }
+        .hub-shell { width: min(1040px, calc(100% - 48px)); margin: 0 auto; padding: 30px 0 35px; }
+        .hub-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #a7b7b8; font-size: 12px; }
+        .hub-brand { display: flex; align-items: center; gap: 12px; font-weight: 600; letter-spacing: .05em; color: #dce4e0; }
+        .hub-mark { padding: 6px 10px; border: 1px solid #6f6241; border-radius: 8px; background: #29291f; color: #d4b568; }
+        .hub-intro { padding: clamp(48px, 9vh, 95px) 0 35px; text-align: center; }
+        .hub-eyebrow { margin: 0 0 14px; color: #d4b568; font-size: 11px; font-weight: 650; letter-spacing: .17em; text-transform: uppercase; }
+        .hub-intro h1 { margin: 0 0 17px; color: #edf1ef; font-size: clamp(32px, 4.5vw, 48px); font-weight: 650; line-height: 1.15; letter-spacing: -.035em; }
+        .hub-intro p:last-child { max-width: 580px; margin: 0 auto; color: #a7b7b8; font-size: 15px; line-height: 1.8; }
+        .hub-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px; margin-top: 12px; }
+        .hub-card { display: flex; flex-direction: column; position: relative; overflow: hidden; min-height: 340px; padding: 30px 31px 27px; border: 1px solid #3b494c; border-radius: 15px; background: #192124; color: inherit; text-align: left; text-decoration: none; transition: transform .18s, border-color .18s, background .18s; }
+        .hub-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #d4b568; opacity: .8; }
+        .hub-card.hub-code::before { background: #8fb9c9; }
+        .hub-card:hover { transform: translateY(-4px); border-color: #a28c55; background: #1d282a; }
+        .hub-card.hub-code:hover { border-color: #7d9eaa; }
+        .hub-card:focus-visible { outline: 3px solid #d4b568; outline-offset: 5px; }
+        .hub-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; gap: 12px; }
+        .hub-icon { display: grid; place-items: center; width: 43px; height: 43px; border: 1px solid #6c6041; border-radius: 10px; background: #2d2b21; color: #d4b568; }
+        .hub-code .hub-icon { background: #233038; border-color: #496774; color: #a0c6d4; }
+        .hub-badge { color: #b3c0bd; border: 1px solid #415054; border-radius: 99px; padding: 4px 10px; font-size: 10px; font-weight: 550; letter-spacing: .04em; }
+        .hub-card h2 { margin: 0 0 10px; color: #edf1ef; font-size: 29px; font-weight: 600; letter-spacing: -.025em; line-height: 1.2; }
+        .hub-description { margin: 0 0 21px; color: #b3c0bd; font-size: 14px; line-height: 1.8; }
+        .hub-features { margin: 0 0 29px; color: #8fa4a5; font-size: 12px; line-height: 1.8; }
+        .hub-card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: auto; padding-top: 20px; border-top: 1px solid #344146; }
+        .hub-action { color: #d4b568; font-size: 13px; font-weight: 600; }
+        .hub-code .hub-action { color: #a0c6d4; }
+        .hub-count { color: #a7b7b8; font-size: 11px; white-space: nowrap; }
+        .hub-note { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 26px 0 0; color: #a7b7b8; font-size: 12px; text-align: center; line-height: 1.8; }
+        .hub-foot { display: flex; justify-content: space-between; gap: 15px; margin-top: 65px; padding-top: 20px; border-top: 1px solid #344146; color: #809596; font-size: 11px; }
+        @media (prefers-reduced-motion: reduce) { .hub-card { transition: none; } .hub-card:hover { transform: none; } }
+        @media (max-width: 650px) {
+            .hub-shell { width: calc(100% - 32px); padding-top: 21px; }
+            .hub-top { font-size: 10px; }
+            .hub-intro { padding: 43px 0 25px; text-align: left; }
+            .hub-intro h1 { font-size: 35px; }
+            .hub-intro p:last-child { font-size: 13px; margin: 0; }
+            .hub-choices { grid-template-columns: 1fr; gap: 18px; }
+            .hub-card { padding: 24px; min-height: 310px; }
+            .hub-card-top { margin-bottom: 20px; }
+            .hub-card h2 { font-size: 27px; }
+            .hub-description { font-size: 13px; }
+            .hub-features { margin-bottom: 21px; }
+            .hub-note { align-items: flex-start; font-size: 11px; }
+            .hub-note svg { margin-top: 3px; flex-shrink: 0; }
+            .hub-foot { margin-top: 35px; font-size: 10px; }
+        }
     </style>
+    <link rel="stylesheet" href="theme-vscode.css">
 </head>
 
 <body class="h-screen flex flex-col font-sans overflow-hidden">
 
+    <main id="landing-page" class="hub-shell">
+        <header class="hub-top">
+            <div class="hub-brand"><span class="ide-window-controls" aria-hidden="true"><span></span><span></span><span></span></span><span class="hub-mark">MLA</span><span>STUDY HUB</span></div>
+            <span>CS0075 · Machine Learning Algorithms</span>
+        </header>
+        <section class="hub-intro" aria-labelledby="hub-title">
+            <p class="hub-eyebrow">One subject. Two ways to practice.</p>
+            <h1 id="hub-title">Choose your practice.</h1>
+            <p>Build your understanding with concept questions, or practice the Python syntax from your modules. Pick where you want to start.</p>
+        </section>
+        <div class="hub-choices">
+            <a class="hub-card" href="concept-reviewer.html" aria-labelledby="quizzer-title" aria-describedby="quizzer-description">
+                <div class="hub-card-top">
+                    <span class="hub-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="6" r="2"/><path d="M11 6h10M11 12h10M11 18h10"/><circle cx="5" cy="12" r="2"/><circle cx="5" cy="18" r="2"/></svg></span>
+                    <span class="hub-badge">M2 · SUPERVISED LEARNING</span>
+                </div>
+                <h2 id="quizzer-title">Quizzer</h2>
+                <p id="quizzer-description" class="hub-description">Test the ideas behind the models with multiple-choice questions and explanations.</p>
+                <p class="hub-features">Study notes · Topic filters · Retry missed questions</p>
+                <div class="hub-card-bottom"><span class="hub-action">Practice concepts <span aria-hidden="true">→</span></span><span class="hub-count">64 questions · 8 topics</span></div>
+            </a>
+            <a class="hub-card hub-code" href="index.html?mode=code" aria-labelledby="coder-title" aria-describedby="coder-description">
+                <div class="hub-card-top">
+                    <span class="hub-icon" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18"/></svg></span>
+                    <span class="hub-badge">M2 + M5 · PYTHON PRACTICE</span>
+                </div>
+                <h2 id="coder-title">Coder</h2>
+                <p id="coder-description" class="hub-description">Fill in missing code, check your answers, and build confidence with the course workflows.</p>
+                <p class="hub-features">Code blanks · Mistake review · Keyboard shortcuts</p>
+                <div class="hub-card-bottom"><span class="hub-action">Practice code <span aria-hidden="true">→</span></span><span class="hub-count"><span id="hub-blank-count">180</span> blanks · <span id="hub-file-count">24</span> files</span></div>
+            </a>
+        </div>
+        <p class="hub-note"><svg width="15" height="16" viewBox="0 0 16 18" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><rect x="2" y="8" width="12" height="9" rx="2"/><path d="M4.5 8V5a3.5 3.5 0 0 1 7 0v3"/></svg>Your progress is saved separately for each practice mode in this browser.</p>
+        <footer class="hub-foot"><span>Learn the concept. Practice the syntax.</span><span>Made for your MLA coursework</span></footer>
+    </main>
+
+    <div id="coding-app" hidden>
     <!-- Top Navigation Bar -->
     <header class="header-bg border-b border-gray-700 p-3 flex flex-wrap shrink-0 gap-3 justify-between items-center shadow-md z-10">
         <div class="flex items-center gap-4 px-2">
@@ -280,6 +382,10 @@
             <h1 class="text-gray-300 font-semibold text-sm tracking-wide">Machine Learning Algorithms - Reviewer</h1>
         </div>
         <div class="flex flex-wrap items-center gap-3 text-sm font-medium" aria-live="polite">
+            <a href="index.html"
+                class="px-3 py-1.5 rounded text-gray-300 hover:bg-gray-700 transition-colors">← Home</a>
+            <a href="concept-reviewer.html"
+                class="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-amber-200 transition-colors">Concept quiz ↗</a>
             <div class="bg-blue-900/50 text-blue-300 px-4 py-1.5 rounded-full border border-blue-700/50 shadow-inner">
                 Score: <span id="score-counter" class="font-bold text-white">0</span> / <span id="total-blanks">0</span>
                 <span id="save-status" class="ml-2 text-xs text-gray-400" role="status"></span>
@@ -400,7 +506,14 @@
         </main>
     </div>
 
+    </div>
     <script>
+        const isCodingMode = document.documentElement.dataset.mode === 'code';
+        document.getElementById('coding-app').hidden = !isCodingMode;
+        document.getElementById('landing-page').hidden = isCodingMode;
+        document.title = isCodingMode
+            ? 'Machine Learning Algorithms - Coding Reviewer'
+            : 'Machine Learning Algorithms - Study Hub';
         // =====================================================================
         // DATA: Modules → Quizzes
         // To add a new module, just push another object into this array.
@@ -1327,6 +1440,13 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
         ];
 
         // =====================================================================
+        // The landing page reads counts without loading or saving a coding session.
+        document.getElementById('hub-blank-count').textContent = modules.reduce((sum, mod) =>
+            sum + mod.quizzes.reduce((count, quiz) => count + quiz.answers.length, 0), 0);
+        document.getElementById('hub-file-count').textContent = modules.reduce((sum, mod) =>
+            sum + mod.quizzes.length, 0);
+
+        if (isCodingMode) {
         // Flatten helpers — build a flat list for global indexing
         // =====================================================================
         const flatQuizzes = [];          // { moduleIdx, quizIdx, quiz, moduleName, folder }
@@ -1959,6 +2079,7 @@ print('R-squared (R²) Score: ', round(r2, 2))`,
         renderMistakes();
         buildSidebar();
         loadQuiz(currentFlatIndex);
+        }
     </script>
 </body>
 
